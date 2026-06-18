@@ -1,11 +1,6 @@
 # Ghost Spine
 A program to visualize the inferences made by Ghost Shark
 
-## Required packages
-  - bamnostic
-  - streamlit
-  - pandas
-
 ## Usage
 In the directory where GhostSpine is installed, run `streamlit run app.py`. This will launch a browser window with the program running locally.
 

@@ -25,3 +25,9 @@ def get_mods_from_read(bam_path, target_read_name):
                     return list(read.get_tag("ML"))
                 except Exception:
                     print(f"Failed to get ML Tag for {read.query_name}")
+
+def get_q_score_from_read(bam_path, target_read_name):
+    with bamnostic.AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
+        for read in bam_file:
+            if read.query_name == target_read_name:
+                return read.query_qualities

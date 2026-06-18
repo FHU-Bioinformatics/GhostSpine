@@ -13,6 +13,7 @@ def create_full_mod_list(sequence : str, mod_list : list[int]) -> list[int]:
             full_list.append(0)
     return full_list
 
+#Create a sequence where all T with a mod confidence > thresh is replaced with U
 def create_Uracil_sequence(sequence : str, full_mod_list : list[int], thresh : int) -> list[str]:
     U_seq = []
     for i in range(len(sequence)):
@@ -27,15 +28,11 @@ def create_Uracil_sequence(sequence : str, full_mod_list : list[int], thresh : i
 
 
 def visualize_read(bam_path, read_name, thresh) -> None:
-    sequence = bamParsing.get_sequence_from_read(bam_path, read_name)
     mods = bamParsing.get_mods_from_read(bam_path, read_name)
-    qualities = bamParsing.get_q_score_from_read(bam_path, read_name)
+    sequence, qualities = bamParsing.get_seq_and_score_from_read(bam_path, read_name)
 
     st.warning(f"Currently viewing read: {read_name}")
-    # st.warning(qualities)
-    print(qualities)
-    # st.warning(sequence)
-    # st.warning(mods)
+    st.info(f"{len(sequence)} Bases // Avg Q-Score: {round(sum(qualities) / len(qualities), 1)}")
 
     df = pd.DataFrame([range(len(sequence))])
     df.loc[len(df)] = [char for char in sequence] #Put canonical sequence into df
@@ -49,7 +46,7 @@ def visualize_read(bam_path, read_name, thresh) -> None:
     df.loc[len(df)] = full_mod_list #Put full mod list into df
     df.loc[len(df)] = create_Uracil_sequence(sequence, full_mod_list, thresh) #Make Uracil converted sequence
 
-    df["Index"] = ["Canonical", "Q-Score", "U+T Mod", "Uracil Seq."]
+    df["Index"] = ["Canonical", "Q-Score", "T+U Mod", "Uracil Seq."]
     df.insert(0, 'Index', df.pop('Index'))
 
     st.dataframe(df, hide_index=True, on_select="ignore", )

@@ -6,8 +6,14 @@ from tkinter import filedialog
 import bamParsing
 import readVisualizer
 
+st.set_page_config(
+    page_title="Ghost Spine",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-st.title("Ghost Spine: Ghost Shark Inference Viewer")
+st.subheader("Ghost Spine: Ghost Shark Inference Viewer")
 
 
 def launch_file_picker():
@@ -18,14 +24,13 @@ def launch_file_picker():
     file_path = filedialog.askopenfilename(master=root, filetypes=[('BAM Files', '*.bam')])
     
     if file_path:
-        # Standardize path slashes for cross-compatibility between Win/Mac
         st.session_state["bam"] = file_path
 
 
 select_file_button = st.sidebar.button(f"Select BAM File", on_click=launch_file_picker)
 
 if "bam" in st.session_state:
-    st.sidebar.info(st.session_state["bam"])
+    st.sidebar.success(st.session_state["bam"])
 else:
     st.sidebar.warning("Please select a BAM file")
 

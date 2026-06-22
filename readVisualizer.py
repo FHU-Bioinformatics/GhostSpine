@@ -26,13 +26,21 @@ def create_Uracil_sequence(sequence : str, full_mod_list : list[int], thresh : i
                 U_seq.append("T")
     return U_seq
 
+def get_suspected_uracils(mod_list : list[int], thresh) -> int:
+    uracil_sum = 0
+    for mod in mod_list:
+        if mod > thresh:
+            uracil_sum += 1
+    return uracil_sum
 
 def visualize_read(bam_path, read_name, thresh) -> None:
     mods = bamParsing.get_mods_from_read(bam_path, read_name)
     sequence, qualities = bamParsing.get_seq_and_score_from_read(bam_path, read_name)
 
+    suspected_uracils = get_suspected_uracils(mods, thresh)
+
     st.warning(f"Currently viewing read: {read_name}")
-    st.info(f"{len(sequence)} Bases // Avg Q-Score: {round(sum(qualities) / len(qualities), 1)}")
+    st.info(f"{len(sequence)} Bases // Avg Q-Score: {round(sum(qualities) / len(qualities), 1)} // Uracil Count (>= {thresh} threshold): {suspected_uracils}")
 
     df = pd.DataFrame([range(len(sequence))])
     df.loc[len(df)] = [char for char in sequence] #Put canonical sequence into df

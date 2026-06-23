@@ -56,7 +56,7 @@ def make_read_vizualization_dataframe(sequence, qualities, mods, thresh):
 
     return df
 
-def make_U_mod_line_graph(mods, title : str) -> None:
+def make_U_mod_line_graph(mods, title : str, thresh) -> None:
     df = pd.DataFrame({'Mod Score': mods})
 
     fig, ax = plt.subplots(figsize=(15, 5))
@@ -64,6 +64,10 @@ def make_U_mod_line_graph(mods, title : str) -> None:
 
     plt.title(title)
     plt.ylabel("T+U Mod Score")
+    plt.ylim(0, 255)
+    plt.grid(axis='y')
+    plt.axhline(y=thresh, color='r', linestyle='--', linewidth=2)
+
     st.pyplot(fig)
 
 def visualize_read(bam_path, read_name, thresh) -> None:
@@ -78,6 +82,6 @@ def visualize_read(bam_path, read_name, thresh) -> None:
     df = make_read_vizualization_dataframe(sequence, qualities, mods, thresh)
 
     st.dataframe(df, hide_index=True, on_select="ignore", )
-    make_U_mod_line_graph(mods[:100], "First 100 T reads by T+U Mod Score")
-    make_U_mod_line_graph(mods[-100:], "Last 100 T reads by T+U Mod Score")
+    make_U_mod_line_graph(mods[:100], "First 100 T reads by T+U Mod Score", thresh)
+    make_U_mod_line_graph(mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)
 

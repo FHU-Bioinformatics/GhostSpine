@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 import bamParsing
 
 #The current mod list only contains mod values for each T. Extend the list to include 0 for every other base.
@@ -45,6 +46,8 @@ def make_read_vizualization_dataframe(sequence, qualities, mods, thresh):
     df.loc[len(df)] = [q for q in qualities] #insert q scores
 
     full_mod_list = create_full_mod_list(sequence, mods.copy())
+    # full_mod_list = mods
+
     df.loc[len(df)] = full_mod_list #Put full mod list into df
     df.loc[len(df)] = create_Uracil_sequence(sequence, full_mod_list, thresh) #Make Uracil converted sequence
 
@@ -52,6 +55,16 @@ def make_read_vizualization_dataframe(sequence, qualities, mods, thresh):
     df.insert(0, 'Index', df.pop('Index')) #make the first column an "index" column
 
     return df
+
+def make_U_mod_line_graph(mods, title : str) -> None:
+    df = pd.DataFrame({'Mod Score': mods})
+
+    fig, ax = plt.subplots(figsize=(15, 5))
+    df.plot(kind="line", ax=ax, marker='o')
+
+    plt.title(title)
+    plt.ylabel("T+U Mod Score")
+    st.pyplot(fig)
 
 def visualize_read(bam_path, read_name, thresh) -> None:
     mods = bamParsing.get_mods_from_read(bam_path, read_name)
@@ -65,4 +78,6 @@ def visualize_read(bam_path, read_name, thresh) -> None:
     df = make_read_vizualization_dataframe(sequence, qualities, mods, thresh)
 
     st.dataframe(df, hide_index=True, on_select="ignore", )
+    make_U_mod_line_graph(mods[:100], "First 100 T reads by T+U Mod Score")
+    make_U_mod_line_graph(mods[-100:], "Last 100 T reads by T+U Mod Score")
 

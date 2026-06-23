@@ -26,12 +26,32 @@ def create_Uracil_sequence(sequence : str, full_mod_list : list[int], thresh : i
                 U_seq.append("T")
     return U_seq
 
+#Get the count of Ts whose mod score is >= the uracil threshold
 def get_suspected_uracils(mod_list : list[int], thresh) -> int:
     uracil_sum = 0
     for mod in mod_list:
         if mod > thresh:
             uracil_sum += 1
     return uracil_sum
+
+#Create a dataframe to visualize the components of 
+def make_read_vizualization_dataframe(sequence, qualities, mods, thresh):
+    df = pd.DataFrame([range(len(sequence))])
+    df.loc[len(df)] = [char for char in sequence] #Put canonical sequence into df
+
+    df.drop(0, axis=0, inplace=True) #janky workaround to get the df to display everything horizontally
+    df = df.reset_index(drop=True)
+
+    df.loc[len(df)] = [q for q in qualities] #insert q scores
+
+    full_mod_list = create_full_mod_list(sequence, mods.copy())
+    df.loc[len(df)] = full_mod_list #Put full mod list into df
+    df.loc[len(df)] = create_Uracil_sequence(sequence, full_mod_list, thresh) #Make Uracil converted sequence
+
+    df["Index"] = ["Canonical", "Q-Score", "T+U Mod", "Uracil Seq."]
+    df.insert(0, 'Index', df.pop('Index')) #make the first column an "index" column
+
+    return df
 
 def visualize_read(bam_path, read_name, thresh) -> None:
     mods = bamParsing.get_mods_from_read(bam_path, read_name)
@@ -42,20 +62,7 @@ def visualize_read(bam_path, read_name, thresh) -> None:
     st.warning(f"Currently viewing read: {read_name}")
     st.info(f"{len(sequence)} Bases // Avg Q-Score: {round(sum(qualities) / len(qualities), 1)} // Uracil Count (>= {thresh} threshold): {suspected_uracils}")
 
-    df = pd.DataFrame([range(len(sequence))])
-    df.loc[len(df)] = [char for char in sequence] #Put canonical sequence into df
-    # df.loc[len(df)] = sequence
-    df.drop(0, axis=0, inplace=True)
-    df = df.reset_index(drop=True)
-
-    df.loc[len(df)] = [q for q in qualities]
-
-    full_mod_list = create_full_mod_list(sequence, mods.copy())
-    df.loc[len(df)] = full_mod_list #Put full mod list into df
-    df.loc[len(df)] = create_Uracil_sequence(sequence, full_mod_list, thresh) #Make Uracil converted sequence
-
-    df["Index"] = ["Canonical", "Q-Score", "T+U Mod", "Uracil Seq."]
-    df.insert(0, 'Index', df.pop('Index'))
+    df = make_read_vizualization_dataframe(sequence, qualities, mods, thresh)
 
     st.dataframe(df, hide_index=True, on_select="ignore", )
 

@@ -46,7 +46,6 @@ def make_read_vizualization_dataframe(sequence, qualities, mods, thresh):
     df.loc[len(df)] = [q for q in qualities] #insert q scores
 
     full_mod_list = create_full_mod_list(sequence, mods.copy())
-    # full_mod_list = mods
 
     df.loc[len(df)] = full_mod_list #Put full mod list into df
     df.loc[len(df)] = create_Uracil_sequence(sequence, full_mod_list, thresh) #Make Uracil converted sequence
@@ -60,7 +59,7 @@ def make_U_mod_line_graph(mods, title : str, thresh) -> None:
     df = pd.DataFrame({'Mod Score': mods})
 
     fig, ax = plt.subplots(figsize=(15, 5))
-    df.plot(kind="line", ax=ax, marker='o')
+    df.plot(kind="line", ax=ax, marker='o',)
 
     plt.title(title)
     plt.ylabel("T+U Mod Score")
@@ -70,18 +69,29 @@ def make_U_mod_line_graph(mods, title : str, thresh) -> None:
 
     st.pyplot(fig)
 
+def make_summary_stats(sequence, qualities, thresh, suspected_uracils):
+    bp_length, qscore, suspected_u = st.columns(3)
+
+    bp_length.metric("Read Length", len(sequence), border=True)
+
+    qscore.metric("Average Q-Score", round(sum(qualities) / len(qualities), 1), border=True)
+
+    suspected_u.metric(f"Uracil Count (>= {thresh})", suspected_uracils, border=True)
+
 def visualize_read(bam_path, read_name, thresh) -> None:
     mods = bamParsing.get_mods_from_read(bam_path, read_name)
     sequence, qualities = bamParsing.get_seq_and_score_from_read(bam_path, read_name)
 
     suspected_uracils = get_suspected_uracils(mods, thresh)
 
-    st.warning(f"Currently viewing read: {read_name}")
-    st.info(f"{len(sequence)} Bases // Avg Q-Score: {round(sum(qualities) / len(qualities), 1)} // Uracil Count (>= {thresh} threshold): {suspected_uracils}")
+    st.info(f"Currently viewing read: {read_name}")
+
+    make_summary_stats(sequence, qualities, thresh, suspected_uracils)
 
     df = make_read_vizualization_dataframe(sequence, qualities, mods, thresh)
 
     st.dataframe(df, hide_index=True, on_select="ignore", )
+
     make_U_mod_line_graph(mods[:100], "First 100 T reads by T+U Mod Score", thresh)
     make_U_mod_line_graph(mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)
 

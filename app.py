@@ -2,7 +2,7 @@ import streamlit as st
 
 import tkinter as tk
 from tkinter import filedialog
-
+import sys
 import bamParsing
 import readVisualizer
 
@@ -16,14 +16,28 @@ st.set_page_config(
 st.subheader("Ghost Spine: Ghost Shark Inference Viewer")
 
 def launch_file_picker():
-    root = tk.Tk()
-    root.withdraw()
-    root.wm_attributes('-topmost', 1)
-    
-    file_path = filedialog.askopenfilename(master=root, filetypes=[('BAM Files', '*.bam')])
-    
-    if file_path:
-        st.session_state["bam"] = file_path
+    if sys.platform == "win32": 
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        
+        file_path = filedialog.askopenfilename(master=root, filetypes=[('BAM Files', '*.bam')])
+        
+        if file_path:
+            st.session_state["bam"] = file_path
+    elif sys.platform == "darwin":
+        script = '''
+                set fileSelected to choose file with prompt "Select a BAM file"
+                return POSIX path of fileSelected
+                '''
+        import subprocess
+        result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
+        if result.returncode == 0:
+            file_path =  result.stdout.strip()
+            if file_path: 
+                st.session_state["bam"] = file_path
+    else:
+        st.sidebar.error("Why you using this OS?")
 
 
 def on_extract_reads_button_pressed():

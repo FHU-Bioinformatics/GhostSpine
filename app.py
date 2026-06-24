@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.subheader("Ghost Spine: Ghost Shark Inference Viewer")
+st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
 
 def launch_file_picker():
     if sys.platform == "win32": 

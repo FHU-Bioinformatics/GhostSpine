@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import bamParsing
 
@@ -27,11 +28,21 @@ def get_sum_of_u_positions(filtered_reads, U_thresh, n : int):
     for i in range(n)]
     
     return counts
-    
+
+
+def make_aggregate_summary_stats(reads):
+    avg_seq_len, min_seq_len, max_seq_len = st.columns(3)
+    sequence_lengths = np.array([len(r.sequence) for r in reads])
+
+    avg_seq_len.metric("Mean Read Length", round(sequence_lengths.mean()), border=True)
+    min_seq_len.metric("Min Read Length", sequence_lengths.min(), border=True)
+    max_seq_len.metric("Max Read Length", sequence_lengths.max(), border=True)
 
 def aggregate_file(bam, U_thresh):
     filtered_reads, num_reads_in_file = bamParsing.get_everything(bam)
     st.info(f"Aggregated {len(filtered_reads)} reads of length 80+ from {num_reads_in_file} reads")
+    
+    make_aggregate_summary_stats(filtered_reads)
     
 
     counts = get_sum_of_u_positions(filtered_reads, U_thresh, 50)

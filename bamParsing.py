@@ -31,10 +31,6 @@ class FullRead:
         self.sequence = sequence
         self.qualities = qualities
         self.mods = mods
-        
-        #Technically could cause an out of range exception, 
-        #but class instantiation is inside a try except block
-        self.first_twenty_bases = self.sequence[:50]
     
     #Uses the mod scores to convert a sequence to a u containing sequence
     def generate_U_seq(self, seq, mods, U_thresh):

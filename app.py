@@ -17,16 +17,8 @@ st.set_page_config(
 st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
 
 def launch_file_picker():
-    if sys.platform == "win32": 
-        root = tk.Tk()
-        root.withdraw()
-        root.wm_attributes('-topmost', 1)
-        
-        file_path = filedialog.askopenfilename(master=root, filetypes=[('BAM Files', '*.bam')])
-        
-        if file_path:
-            st.session_state["bam"] = file_path
-    elif sys.platform == "darwin":
+    #file picker fix for mac
+    if sys.platform == "darwin":
         script = '''
                 set fileSelected to choose file with prompt "Select a BAM file"
                 return POSIX path of fileSelected
@@ -38,7 +30,15 @@ def launch_file_picker():
             if file_path: 
                 st.session_state["bam"] = file_path
     else:
-        st.sidebar.error("Why you using this OS?")
+        root = tk.Tk()
+        root.withdraw()
+        root.wm_attributes('-topmost', 1)
+        
+        file_path = filedialog.askopenfilename(master=root, filetypes=[('BAM Files', '*.bam')])
+        
+        if file_path:
+            st.session_state["bam"] = file_path
+
 
 
 def on_extract_reads_button_pressed():

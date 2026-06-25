@@ -2,8 +2,6 @@
 A program to visualize the inferences made by Ghost Shark
 
 ## Usage
-If Ghost Spine is running on Mac, you may need to install `tkinter` as well. This is not required on Windows.
-
 In the directory where GhostSpine is installed, run `streamlit run app.py`. This will launch a browser window with the program running locally.
 
 Assuming you have a BAM file that was run through Ghost Shark, select it inside Ghost Spine and choose an analysis mode.

@@ -1,8 +1,13 @@
+
 import streamlit as st
 
 import tkinter as tk
 from tkinter import filedialog
 import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 import bamParsing
 import readVisualizer
 import readAggregator
@@ -15,6 +20,7 @@ st.set_page_config(
 )
 
 st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
+st.text("v1.0 (6/26/26)")
 
 def launch_file_picker():
     #file picker fix for mac

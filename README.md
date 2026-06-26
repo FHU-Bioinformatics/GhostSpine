@@ -14,3 +14,7 @@ the contents of the read itself. The canonical sequence is the original sequence
 ### Aggregate Mode
 This mode is for viewing aggregate statistics of every read in the BAM file. It currently allows the visualization of the quantities of
 uracil at each of the first 50 positions in each read, aggregated into a single line graph.
+
+## Custom Build
+1. `streamlit-desktop-app build app.py --name "GhostSpine" --pyinstaller-options --collect-data="bamnostic"`
+2. Copy the `.streamlit` directory and paste it in the root directory of `dist/GhostSpine`

@@ -88,9 +88,9 @@ def visualize_read(bam_path, read_name, thresh) -> None:
 
     make_summary_stats(sequence, qualities, thresh, suspected_uracils)
 
-    df = make_read_vizualization_dataframe(sequence, qualities, mods, thresh)
-
-    st.dataframe(df, hide_index=True, on_select="ignore", )
+    with st.spinner("Building read visualization..."):
+        df = make_read_vizualization_dataframe(sequence, qualities, mods, thresh)
+        st.dataframe(df, hide_index=True, on_select="ignore", )
 
     make_U_mod_line_graph(mods[:100], "First 100 T reads by T+U Mod Score", thresh)
     make_U_mod_line_graph(mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)

@@ -218,6 +218,6 @@ __marimo__/
 .streamlit/secrets.toml
 
 #GhostSpine compilation
-GhostSpine.spec
+.spec
 build
 dist

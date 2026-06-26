@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
+
 import matplotlib.pyplot as plt
+
 import bamParsing
 
 #The current mod list only contains mod values for each T. Extend the list to include 0 for every other base.

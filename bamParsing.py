@@ -60,22 +60,15 @@ def get_everything(bam_path):
     num_reads_in_file = 0
     
     with bamnostic.AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
-        for read in bam_file:
-            num_reads_in_file += 1
-            
-            #A read isn't guarenteed to have a mod tag for some reason
-            try:
-            
-                r = FullRead(read.query_name,
-                                read.query_sequence,
-                                read.query_qualities,
-                                list(read.get_tag("ML"))
-                                )
-                    
-                if is_read_valid_for_aggregation(r):
-                    full_reads.append(r)
-            
-            except:
-                pass
+        read = next(bam_file)
+        num_reads_in_file += 1
+        try:
+            r = FullRead(read.query_name,
+                            read.query_sequence,                                read.query_qualities,
+                            list(read.get_tag("ML")))
+            if is_read_valid_for_aggregation(r):
+                full_reads.append(r)
+        except:
+            pass
 
-        return full_reads, num_reads_in_file
+    return full_reads, num_reads_in_file

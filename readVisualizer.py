@@ -69,6 +69,98 @@ def make_U_mod_line_graph(mods, title : str, thresh) -> None:
 
     st.pyplot(fig)
 
+
+
+def q_score_per_TcallU(sequence, full_mod_list, qualities, title: str, thresh) -> None:
+    base_colors = {
+        'A': '#2ecc71',   # green
+        'T': '#3498db',   # blue
+        'U': '#9b59b6',   # purple — T called as U
+        'G': '#e67e22',   # orange
+        'C': '#e74c3c',   # red
+    }
+
+    # selected_bases = [st.checkbox("A", value=True, key="A"), st.checkbox("C", value=True, key="C"), st.checkbox("G", value=True, key="G"),st.checkbox("T", value=True, key="T")]
+    selected_bases = []
+    cols = st.columns(5)
+    if cols[0].checkbox("A", value=True, key="show_A"):
+        selected_bases.append("A")
+    if cols[1].checkbox("T", value=True, key="show_T"):
+        selected_bases.append("T")
+    if cols[2].checkbox("U", value=True, key="show_U"):
+        selected_bases.append("U")
+    if cols[3].checkbox("G", value=True, key="show_G"):
+        selected_bases.append("G")
+    if cols[4].checkbox("C", value=True, key="show_C"):
+        selected_bases.append("C")
+    positions, q_scores, colors, labels = [], [], [], []
+
+    for i, (base, mod, q) in enumerate(zip(sequence, full_mod_list, qualities)):
+        called = 'U' if (base == 'T' and mod >= thresh) else base
+        if called not in selected_bases:
+            continue
+        positions.append(i)
+        q_scores.append(q)
+        colors.append(base_colors.get(called, '#aaaaaa'))
+        labels.append(called)
+
+    fig, ax = plt.subplots(figsize=(15, 5))
+    ax.plot(positions, q_scores, color='#cccccc', linewidth=0.8, zorder=1)
+    ax.scatter(positions, q_scores, c=colors, s=30, zorder=2)
+
+    seen = {}
+    for label, color in zip(labels, colors):
+        if label not in seen:
+            seen[label] = plt.Line2D([0], [0], marker='o', color='w',
+                                     markerfacecolor=color, markersize=8, label=label)
+    ax.legend(handles=list(seen.values()))
+
+    plt.title(title)
+    plt.ylabel("Q-Score")
+    plt.xlabel("Position in Read")
+    plt.grid(axis='y')
+    st.pyplot(fig)
+
+    u_positions = [i for i, mod in enumerate(full_mod_list) if mod >= thresh]
+
+    if not u_positions:
+        st.warning("No uracils called at this threshold.")
+        return
+
+def calculate_Q_score_dis_to_T(sequence, full_mod_list, qualities, title: str, thresh, max_dist=7) -> None:
+
+    u_positions = [i for i, mod in enumerate(full_mod_list) if mod >= thresh]
+
+    if not u_positions:
+        st.warning("No uracils called at this threshold.")
+        return
+
+    distance_base_q = {}
+
+    for i, (base, q) in enumerate(zip(sequence, qualities)):
+        dist = min(abs(i - u_pos) for u_pos in u_positions)
+        if dist == 0 or dist > max_dist:
+            continue
+        if dist not in distance_base_q:
+            distance_base_q[dist] = {}
+        if base not in distance_base_q[dist]:
+            distance_base_q[dist][base] = []
+        distance_base_q[dist][base].append(q)
+
+    rows = []
+    for dist in range(1, max_dist + 1):
+        row = {"Distance": dist}
+        for base in ['A', 'C', 'T', 'G']:
+            scores = distance_base_q.get(dist, {}).get(base, [])
+            row[base] = round(sum(scores) / len(scores), 1) if scores else "-"
+        rows.append(row)
+
+    df = pd.DataFrame(rows).set_index("Distance")
+    st.subheader(title)
+    st.dataframe(df)
+    
+
+
 def make_summary_stats(sequence, qualities, thresh, suspected_uracils):
     bp_length, qscore, suspected_u = st.columns(3)
 
@@ -82,6 +174,7 @@ def visualize_read(bam_path, read_name, thresh) -> None:
     mods = bamParsing.get_mods_from_read(bam_path, read_name)
     sequence, qualities = bamParsing.get_seq_and_score_from_read(bam_path, read_name)
 
+    full_mod_list = create_full_mod_list(sequence, mods.copy())
     suspected_uracils = get_suspected_uracils(mods, thresh)
 
     st.info(f"Currently viewing read: {read_name}")
@@ -94,4 +187,5 @@ def visualize_read(bam_path, read_name, thresh) -> None:
 
     make_U_mod_line_graph(mods[:100], "First 100 T reads by T+U Mod Score", thresh)
     make_U_mod_line_graph(mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)
-
+    q_score_per_TcallU(sequence ,full_mod_list, qualities, "Q-Scores per base with U", thresh)
+    calculate_Q_score_dis_to_T(sequence, full_mod_list, qualities, "Avg Q-Score by Distance from U", thresh)

@@ -46,7 +46,7 @@ def get_canonical_base_counts(reads) -> Counter:
         base_counts.update(r.sequence)
     return base_counts
     
-
+import time
 def aggregate_file(bam, U_thresh):
     with st.spinner("Extracting reads from file, please wait..."):
         filtered_reads, num_reads_in_file = bamParsing.get_everything(bam)

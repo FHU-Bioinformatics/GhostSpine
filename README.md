@@ -20,4 +20,4 @@ in the selected file, as well as base proportions and the aggregate quantities o
 ## Compiled Versions
 Compiled versions of GhostSpine are available, but they are generally inferior to running GhostSpine in a Python environment. Only use the compiled versions of GhostSpine if setting up an environment is impractical.
 
-The downside of compiling a python codebase to an exe is that said exe is flagged by the antivirus and is prevented from running.For Windows, select the downloaded Zip file, right click, and navigate to properties. In the General tab, find security, click unblock, and click apply. Then extract, navigate to the exe, and run it as normal. This step is not required if running GhostSpine in a Python environment.
+The downside of compiling a python codebase to an exe is that said exe is flagged by the antivirus and is prevented from running. For Windows, select the downloaded Zip file, right click, and navigate to properties. In the General tab, find security, click unblock, and click apply. Then extract, navigate to the exe, and run it as normal. This step is not required if running GhostSpine in a Python environment.

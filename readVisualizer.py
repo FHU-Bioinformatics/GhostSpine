@@ -33,23 +33,20 @@ def create_Uracil_sequence(sequence : str, full_mod_list : list[int], thresh : i
 def get_num_uracils(mod_list : list[int], thresh) -> int:
     return sum(1 for mod in mod_list if mod >= thresh)
 
-#Create a dataframe to visualize the components of 
-def make_read_vizualization_dataframe(sequence, qualities, mods, thresh):
-    df = pd.DataFrame([range(len(sequence))])
-    df.loc[len(df)] = [char for char in sequence] #Put canonical sequence into df
 
-    df.drop(0, axis=0, inplace=True) #janky workaround to get the df to display everything horizontally
-    df = df.reset_index(drop=True)
-
-    df.loc[len(df)] = [q for q in qualities] #insert q scores
-
-    full_mod_list = create_full_mod_list(sequence, mods.copy())
-
-    df.loc[len(df)] = full_mod_list #Put full mod list into df
-    df.loc[len(df)] = create_Uracil_sequence(sequence, full_mod_list, thresh) #Make Uracil converted sequence
-
-    df["Index"] = ["Canonical", "Q-Score", "T+U Mod", "Uracil Seq."]
-    df.insert(0, 'Index', df.pop('Index')) #make the first column an "index" column
+#Generate relevant information and insert into a dataframe for easy read analysis
+def make_read_vizualization_dataframe(read, thresh):
+    
+    full_mod_list = create_full_mod_list(read.sequence, read.mods.copy())
+    
+    u_seq = create_Uracil_sequence(read.sequence, full_mod_list, thresh)
+    
+    df = pd.DataFrame({
+        "Canonical" : list(read.sequence),
+        "Q-Score" : list(read.qualities),
+        "T+U Mod" : full_mod_list,
+        "Uracil Seq." : u_seq
+    })
 
     return df
 
@@ -67,7 +64,31 @@ def make_U_mod_line_graph(mods, title : str, thresh) -> None:
 
     st.pyplot(fig)
 
+#Returns a sequence where only bases that are n or more positions away from a T are included
+def gen_T_free_sequence(sequence, n: int) -> list[str]:
+    exclude = [False] * len(sequence)
 
+    for i, value in enumerate(sequence):
+        if value == "T":
+            start = max(0, i - n)
+            end = min(len(sequence), i + n + 1)  # end is exclusive
+            for j in range(start, end):
+                exclude[j] = True
+
+    return [value for value, skip in zip(sequence, exclude) if not skip]
+
+#Returns the incicies of a sequence where the base at said index is not within n positions of a T
+def get_T_free_indicies(sequence, n: int) -> list[str]:
+    exclude = [False] * len(sequence)
+
+    for i, value in enumerate(sequence):
+        if value == "T":
+            start = max(0, i - n)
+            end = min(len(sequence), i + n + 1)
+            for j in range(start, end):
+                exclude[j] = True
+
+    return [i for i, skip in enumerate(exclude) if not skip]
 
 def q_score_per_TcallU(sequence, full_mod_list, qualities, title: str, thresh) -> None:
     base_colors = {
@@ -175,8 +196,11 @@ def visualize_read(read, read_index, thresh) -> None:
     make_summary_stats(read, thresh, suspected_uracils)
 
     with st.spinner("Building read visualization..."):
-        df = make_read_vizualization_dataframe(read.sequence, read.qualities, read.mods, thresh)
-        st.dataframe(df, hide_index=True, on_select="ignore", )
+        df = make_read_vizualization_dataframe(read, thresh)
+        st.dataframe(df.T, hide_index=False, on_select="ignore") #transpose the df to view it horizontally
+        
+        # t_free = df[["Index"] + get_T_free_indicies(read.sequence, 6)].copy()
+        # st.dataframe(t_free)
 
     make_U_mod_line_graph(read.mods[:100], "First 100 T reads by T+U Mod Score", thresh)
     make_U_mod_line_graph(read.mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)

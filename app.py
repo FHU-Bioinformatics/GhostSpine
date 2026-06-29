@@ -19,8 +19,15 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
-st.text("v1.0")
+title, fhu = st.columns([8, 1])
+
+with title:
+    st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
+
+    st.text("v1.0.1")
+
+with fhu:
+    st.image("icons/fhu_academics.jpg", width = 200) #max width to 200 because the image gets way too big at low width
 
 
 def launch_file_picker():
@@ -37,11 +44,6 @@ def launch_file_picker():
             if file_path: 
                 st.session_state["bam"] = file_path
                 
-                #Don't try to view reads from an old file if a new one is loaded
-                if "current_read" in st.session_state:
-                    del st.session_state["current_read"]
-                if "reads" in st.session_state:
-                    del st.session_state["reads"]
     else:
         root = tk.Tk()
         root.withdraw()
@@ -51,13 +53,35 @@ def launch_file_picker():
         
         if file_path:
             st.session_state["bam"] = file_path
-            
-            #Don't try to view reads from an old file if a new one is loaded
-            if "current_read" in st.session_state:
-                del st.session_state["current_read"]
-            if "reads" in st.session_state:
-                del st.session_state["reads"]
 
+
+#load read and read_index session states based on selection by index
+def select_read_by_index():
+    with st.sidebar.form("index_form"):
+        index_to_extract = st.number_input("Read Index (zero-based)", min_value=0, value=0,
+                            help="Extract the read of the index listed in this box. Reads use zero-based indexing, meaning they start at 0 instead of 1.")
+        st.form_submit_button("Search")
+        
+    with st.spinner(f"Searching for read with index {index_to_extract}..."):
+        st.session_state["read"] = bamParsing.get_Nth_read(st.session_state["bam"], index_to_extract)
+        st.session_state["read_index"] = index_to_extract
+
+#load read and read_index session states based on selection by name
+def select_read_by_name():
+    
+    default_text = ""
+    
+    with st.sidebar.form("name_form"):
+        name_to_extract = st.text_input("Read Name", value=default_text,
+                            help="Please input the read name carefully. If you make a mistake, Ghost Spine will search the entire file for a read that does not exist.")
+        clean_name = name_to_extract.strip().lower()
+        st.form_submit_button("Search")
+    
+    if name_to_extract == default_text : return #prevent immediately trying to search for read with invalid name
+    
+    with st.spinner(f"Searching for read with name {clean_name}..."):
+        st.session_state["read"], st.session_state["read_index"] = bamParsing.get_data_from_read(st.session_state["bam"], clean_name)
+    
 
 #Handles all the sidebar widgets and visualization for the analysis of a specific read
 def specific_read_analysis():
@@ -68,31 +92,18 @@ def specific_read_analysis():
     )
     
     if selection_mode == "Index":
-        index_to_extract = st.sidebar.number_input("Index of read (zero-based)", min_value=0, value=0,
-                            help="Extract the read of the index listed in this box. Reads use zero-based indexing, meaning they start at 0 instead of 1.")
-        
-        if st.sidebar.button(f"Search"):
-            with st.spinner(f"Searching for read with index {index_to_extract}..."):
-                st.session_state["read"] = bamParsing.get_Nth_read(st.session_state["bam"], index_to_extract)
-                st.session_state["read_index"] = index_to_extract
-        
+        select_read_by_index()
     elif selection_mode == "Name":
-        name_to_extract = st.sidebar.text_input("Name of read",
-                            help="Please input the read name carefully. If you make a mistake, Ghost Spine will search the entire file for a read that does not exist.")
-        clean_name = name_to_extract.strip().lower()
-        
-        if st.sidebar.button("Search"):
-            with st.spinner(f"Searching for read with name {clean_name}..."):
-                st.session_state["read"], st.session_state["read_index"] = bamParsing.get_data_from_read(st.session_state["bam"], clean_name)
+        select_read_by_name()
     
     if "read" not in st.session_state : return
     
-    uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230)
+    uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230, help="The T+U mod score required to consider a T as a U")
     
     readVisualizer.visualize_read(st.session_state["read"], st.session_state["read_index"], uracil_confidence_threshold)
 
 def read_aggregation_analysis():
-    uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230)
+    uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230, help="The T+U mod score required to consider a T as a U")
     if st.sidebar.button(f"Run Aggregate Analysis", help="Depending on the file size, this may take some time"):
         readAggregator.aggregate_file(st.session_state["bam"], uracil_confidence_threshold)
     

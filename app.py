@@ -59,35 +59,37 @@ def launch_file_picker():
                 del st.session_state["reads"]
 
 
-
-def on_extract_reads_button_pressed():
-    if "bam" not in st.session_state:
-        return
-    st.session_state["reads"] = bamParsing.get_N_reads(st.session_state["bam"], st.session_state["reads_to_extract"])
-
-
 #Handles all the sidebar widgets and visualization for the analysis of a specific read
 def specific_read_analysis():
     
-    # selection_mode = st.sidebar.segmented_control(
-    # "Read Extraction Mode", ["Index", "Name"], selection_mode="single", required=True, default="Index"
-    # )
+    selection_mode = st.sidebar.segmented_control(
+    "Read Extraction Mode", ["Index", "Name"], selection_mode="single", required=True, default="Index",
+    help="Extract a read by its index in the Bam file, or its name"
+    )
     
-    #Get the number of reads to extract from the bam file and extract them
-    st.session_state["reads_to_extract"] = st.sidebar.number_input("Number of reads to extract", min_value = 1, max_value = 9999, value=50)
-    extract_button = st.sidebar.button(f"Extract {st.session_state["reads_to_extract"]} reads", on_click=on_extract_reads_button_pressed)
+    if selection_mode == "Index":
+        index_to_extract = st.sidebar.number_input("Index of read (zero-based)", min_value=0, value=0,
+                            help="Extract the read of the index listed in this box. Reads use zero-based indexing, meaning they start at 0 instead of 1.")
+        
+        if st.sidebar.button(f"Search"):
+            with st.spinner(f"Searching for read with index {index_to_extract}..."):
+                st.session_state["read"] = bamParsing.get_Nth_read(st.session_state["bam"], index_to_extract)
+                st.session_state["read_index"] = index_to_extract
+        
+    elif selection_mode == "Name":
+        name_to_extract = st.sidebar.text_input("Name of read",
+                            help="Please input the read name carefully. If you make a mistake, Ghost Spine will search the entire file for a read that does not exist.")
+        clean_name = name_to_extract.strip().lower()
+        
+        if st.sidebar.button("Search"):
+            with st.spinner(f"Searching for read with name {clean_name}..."):
+                st.session_state["read"], st.session_state["read_index"] = bamParsing.get_data_from_read(st.session_state["bam"], clean_name)
     
-    if "reads" not in st.session_state : return
+    if "read" not in st.session_state : return
     
-    #Load the extracted reads into the dropdown and specify one read to view
-    selected_read = st.sidebar.selectbox("Select read", st.session_state["reads"], filter_mode="contains")
-    st.session_state["current_read"] = selected_read
-    
-    if "current_read" not in st.session_state : return
-
-    #Set the uracil threshold and visualize the selected read
     uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230)
-    readVisualizer.visualize_read(st.session_state["bam"], st.session_state["current_read"], uracil_confidence_threshold)
+    
+    readVisualizer.visualize_read(st.session_state["read"], st.session_state["read_index"], uracil_confidence_threshold)
 
 def read_aggregation_analysis():
     uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230)

@@ -166,15 +166,11 @@ def make_summary_stats(read, thresh, suspected_uracils):
     qscore.metric("Average Q-Score", round(sum(read.qualities) / len(read.qualities), 1), border=True)
     suspected_u.metric(f"Uracil Count (>= {thresh})", suspected_uracils, border=True)
 
-def visualize_read(bam_path, read_name, thresh) -> None:
-    read, index = bamParsing.get_data_from_read(bam_path, read_name)
-    
-    # read = bamParsing.get_Nth_read(bam_path, 0)
-    # index = 0
+def visualize_read(read, read_index, thresh) -> None:
     
     suspected_uracils = get_num_uracils(read.mods, thresh)
 
-    st.info(f"Currently viewing read: {read.name} // Index: {index} (zero-based)")
+    st.info(f"Currently viewing read: {read.name} // Index: {read_index} (zero-based)")
 
     make_summary_stats(read, thresh, suspected_uracils)
 

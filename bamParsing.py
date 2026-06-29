@@ -1,4 +1,5 @@
 from bamnostic import AlignmentFile
+import streamlit as st
 
 #A class to hold all attributes of a read for easier aggregate analysis
 class FullRead:
@@ -22,17 +23,6 @@ class FullRead:
                     new_seq.append("T")
         return new_seq
     
-
-def get_N_reads(bam_path, n : int) -> list[str]:
-    reads = []
-    with AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
-        i = 0
-        for read in bam_file:
-            reads.append(read.query_name)
-            i += 1
-            if i >= int(n):
-                break
-        return reads
                     
 #Extract the name, sequence, qscores, and mods from a read and put them in a FullRead object
 def get_data_from_read(bam_path, target_read_name) -> tuple[FullRead, int]:
@@ -51,9 +41,11 @@ def get_data_from_read(bam_path, target_read_name) -> tuple[FullRead, int]:
                     return r, index
 
                 except:
+                    st.warning("Could not extract all data from the selected read. This read may be missing key data.")
                     raise KeyError("Could not extract all data from the selected read. This read may be missing key data.")
             else:
                 index += 1
+    st.warning(f"Could not find {target_read_name} in the selected file.")
     raise KeyError(f"Could not find {target_read_name} in the selected file.")
 
 #The AlignmentFile object doesn't support bam_file[n], so the Nth read can only be extracted from iteration
@@ -74,9 +66,11 @@ def get_Nth_read(bam_path, n : int) -> tuple[FullRead]:
                     return r
 
                 except:
+                    st.warning("Could not extract all data from the selected read. This read may be missing key data.")
                     raise KeyError("Could not extract all data from the selected read. This read may be missing key data.")
             else:
                 current_index += 1
+    st.warning("Could not extract all data from the selected read. This read may be missing key data.")
     raise IndexError("The specified index is higher than the number of reads in the Bam file")
 
 #Determine if this read should be included in aggregation analysis

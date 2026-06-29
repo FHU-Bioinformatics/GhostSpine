@@ -1,6 +1,9 @@
 # Ghost Spine
 A program to visualize the inferences made by Ghost Shark
 
+### Note
+Compiled versions of GhostSpine are available, but they are generally inferior to running GhostSpine in a Python environment. Only use the compiled versions of GhostSpine if setting up an environment is impractical.
+
 ## Usage
 In the directory where GhostSpine is installed, run `streamlit run app.py`. This will launch a browser window with the program running locally.
 

@@ -20,7 +20,8 @@ st.set_page_config(
 )
 
 st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
-st.text("v1.0 (6/26/26)")
+st.text("v1.0")
+
 
 def launch_file_picker():
     #file picker fix for mac
@@ -35,6 +36,12 @@ def launch_file_picker():
             file_path =  result.stdout.strip()
             if file_path: 
                 st.session_state["bam"] = file_path
+                
+                #Don't try to view reads from an old file if a new one is loaded
+                if "current_read" in st.session_state:
+                    del st.session_state["current_read"]
+                if "reads" in st.session_state:
+                    del st.session_state["reads"]
     else:
         root = tk.Tk()
         root.withdraw()
@@ -44,6 +51,12 @@ def launch_file_picker():
         
         if file_path:
             st.session_state["bam"] = file_path
+            
+            #Don't try to view reads from an old file if a new one is loaded
+            if "current_read" in st.session_state:
+                del st.session_state["current_read"]
+            if "reads" in st.session_state:
+                del st.session_state["reads"]
 
 
 
@@ -55,6 +68,11 @@ def on_extract_reads_button_pressed():
 
 #Handles all the sidebar widgets and visualization for the analysis of a specific read
 def specific_read_analysis():
+    
+    # selection_mode = st.sidebar.segmented_control(
+    # "Read Extraction Mode", ["Index", "Name"], selection_mode="single", required=True, default="Index"
+    # )
+    
     #Get the number of reads to extract from the bam file and extract them
     st.session_state["reads_to_extract"] = st.sidebar.number_input("Number of reads to extract", min_value = 1, max_value = 9999, value=50)
     extract_button = st.sidebar.button(f"Extract {st.session_state["reads_to_extract"]} reads", on_click=on_extract_reads_button_pressed)
@@ -88,7 +106,8 @@ def render_sidebar():
 
     if "bam" not in st.session_state : return
 
-    analysis_mode = st.sidebar.radio("Analysis Mode", ["Specific Read", "Aggregation"])
+    analysis_mode = st.sidebar.radio("Analysis Mode", ["Specific Read", "Aggregation"], 
+                                     help="View the makeup and stats of a single read (Specific Read), or of the entire file (Aggregation)")
     
     if analysis_mode == "Specific Read":
         specific_read_analysis()

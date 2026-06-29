@@ -30,12 +30,8 @@ def create_Uracil_sequence(sequence : str, full_mod_list : list[int], thresh : i
     return U_seq
 
 #Get the count of Ts whose mod score is >= the uracil threshold
-def get_suspected_uracils(mod_list : list[int], thresh) -> int:
-    uracil_sum = 0
-    for mod in mod_list:
-        if mod > thresh:
-            uracil_sum += 1
-    return uracil_sum
+def get_num_uracils(mod_list : list[int], thresh) -> int:
+    return sum(1 for mod in mod_list if mod >= thresh)
 
 #Create a dataframe to visualize the components of 
 def make_read_vizualization_dataframe(sequence, qualities, mods, thresh):
@@ -82,7 +78,7 @@ def q_score_per_TcallU(sequence, full_mod_list, qualities, title: str, thresh) -
         'C': '#e74c3c',   # red
     }
 
-    # selected_bases = [st.checkbox("A", value=True, key="A"), st.checkbox("C", value=True, key="C"), st.checkbox("G", value=True, key="G"),st.checkbox("T", value=True, key="T")]
+    
     selected_bases = []
     cols = st.columns(5)
     if cols[0].checkbox("A", value=True, key="show_A"):
@@ -163,31 +159,31 @@ def calculate_Q_score_dis_to_T(sequence, full_mod_list, qualities, title: str, t
     
 
 
-def make_summary_stats(sequence, qualities, thresh, suspected_uracils):
+def make_summary_stats(read, thresh, suspected_uracils):
     bp_length, qscore, suspected_u = st.columns(3)
 
-    bp_length.metric("Read Length", len(sequence), border=True)
-
-    qscore.metric("Average Q-Score", round(sum(qualities) / len(qualities), 1), border=True)
-
+    bp_length.metric("Read Length", len(read.sequence), border=True)
+    qscore.metric("Average Q-Score", round(sum(read.qualities) / len(read.qualities), 1), border=True)
     suspected_u.metric(f"Uracil Count (>= {thresh})", suspected_uracils, border=True)
 
 def visualize_read(bam_path, read_name, thresh) -> None:
-    mods = bamParsing.get_mods_from_read(bam_path, read_name)
-    sequence, qualities = bamParsing.get_seq_and_score_from_read(bam_path, read_name)
+    read, index = bamParsing.get_data_from_read(bam_path, read_name)
+    
+    # read = bamParsing.get_Nth_read(bam_path, 0)
+    # index = 0
+    
+    suspected_uracils = get_num_uracils(read.mods, thresh)
 
-    full_mod_list = create_full_mod_list(sequence, mods.copy())
-    suspected_uracils = get_suspected_uracils(mods, thresh)
+    st.info(f"Currently viewing read: {read.name} // Index: {index} (zero-based)")
 
-    st.info(f"Currently viewing read: {read_name}")
-
-    make_summary_stats(sequence, qualities, thresh, suspected_uracils)
+    make_summary_stats(read, thresh, suspected_uracils)
 
     with st.spinner("Building read visualization..."):
-        df = make_read_vizualization_dataframe(sequence, qualities, mods, thresh)
+        df = make_read_vizualization_dataframe(read.sequence, read.qualities, read.mods, thresh)
         st.dataframe(df, hide_index=True, on_select="ignore", )
 
-    make_U_mod_line_graph(mods[:100], "First 100 T reads by T+U Mod Score", thresh)
-    make_U_mod_line_graph(mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)
-    q_score_per_TcallU(sequence ,full_mod_list, qualities, "Q-Scores per base with U", thresh)
-    calculate_Q_score_dis_to_T(sequence, full_mod_list, qualities, "Avg Q-Score by Distance from U", thresh)
+    make_U_mod_line_graph(read.mods[:100], "First 100 T reads by T+U Mod Score", thresh)
+    make_U_mod_line_graph(read.mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)
+    
+    # q_score_per_TcallU(sequence ,full_mod_list, qualities, "Q-Scores per base with U", thresh)
+    # calculate_Q_score_dis_to_T(sequence, full_mod_list, qualities, "Avg Q-Score by Distance from U", thresh)

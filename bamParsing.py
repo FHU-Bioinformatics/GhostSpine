@@ -1,29 +1,4 @@
-# import bamnostic
 from bamnostic import AlignmentFile
-
-def get_N_reads(bam_path, n : int) -> list[str]:
-    reads = []
-    with AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
-        i = 0
-        for read in bam_file:
-            reads.append(read.query_name)
-            i += 1
-            if i >= int(n):
-                break
-        return reads
-
-def get_mods_from_read(bam_path, target_read_name):
-    with AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
-        for read in bam_file:
-            if read.query_name == target_read_name:
-                return list(read.get_tag("ML"))
-                    
-
-def get_seq_and_score_from_read(bam_path, target_read_name):
-    with AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
-        for read in bam_file:
-            if read.query_name == target_read_name:
-                return read.query_sequence, read.query_qualities
 
 #A class to hold all attributes of a read for easier aggregate analysis
 class FullRead:
@@ -48,6 +23,62 @@ class FullRead:
         return new_seq
     
 
+def get_N_reads(bam_path, n : int) -> list[str]:
+    reads = []
+    with AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
+        i = 0
+        for read in bam_file:
+            reads.append(read.query_name)
+            i += 1
+            if i >= int(n):
+                break
+        return reads
+                    
+#Extract the name, sequence, qscores, and mods from a read and put them in a FullRead object
+def get_data_from_read(bam_path, target_read_name) -> tuple[FullRead, int]:
+    index = 0
+    with AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
+        for read in bam_file:
+            if read.query_name == target_read_name:
+                try:
+
+                    r = FullRead(read.query_name,
+                                    read.query_sequence,
+                                    read.query_qualities,
+                                    list(read.get_tag("ML"))
+                                    )
+                    
+                    return r, index
+
+                except:
+                    raise KeyError("Could not extract all data from the selected read. This read may be missing key data.")
+            else:
+                index += 1
+    raise KeyError(f"Could not find {target_read_name} in the selected file.")
+
+#The AlignmentFile object doesn't support bam_file[n], so the Nth read can only be extracted from iteration
+#same as get_data_from_read(), but it searches for a given index rather than a given name
+def get_Nth_read(bam_path, n : int) -> tuple[FullRead]:
+    current_index = 0
+    with AlignmentFile(bam_path, "rb", check_sq=False) as bam_file:
+        for read in bam_file:
+            if current_index == n:
+                try:
+
+                    r = FullRead(read.query_name,
+                                read.query_sequence,
+                                read.query_qualities,
+                                list(read.get_tag("ML"))
+                                )
+                            
+                    return r
+
+                except:
+                    raise KeyError("Could not extract all data from the selected read. This read may be missing key data.")
+            else:
+                current_index += 1
+    raise IndexError("The specified index is higher than the number of reads in the Bam file")
+
 #Determine if this read should be included in aggregation analysis
 def is_read_valid_for_aggregation(read : FullRead) -> bool:
     if len(read.sequence) < 80:
@@ -55,7 +86,7 @@ def is_read_valid_for_aggregation(read : FullRead) -> bool:
     
     return True
 
-
+#Called in aggregate analysis mode
 def get_everything(bam_path):
     full_reads : list[FullRead] = []
     num_reads_in_file = 0

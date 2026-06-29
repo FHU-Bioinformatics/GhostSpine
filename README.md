@@ -1,11 +1,8 @@
 # Ghost Spine
 A program to visualize the inferences made by Ghost Shark
 
-### Note
-Compiled versions of GhostSpine are available, but they are generally inferior to running GhostSpine in a Python environment. Only use the compiled versions of GhostSpine if setting up an environment is impractical.
-
 ## Usage
-In the directory where GhostSpine is installed, run `streamlit run app.py`. This will launch a browser window with the program running locally.
+In the directory where GhostSpine is installed, run `streamlit run app.py`. This will launch a browser window with the program running locally. If you need a compiled version, see the Compiled Versions section of the README.
 
 Assuming you have a BAM file that was run through Ghost Shark, select it inside Ghost Spine and choose an analysis mode.
 
@@ -19,3 +16,8 @@ in the selected file, as well as base proportions and the aggregate quantities o
 ## Custom Build
 1. `streamlit-desktop-app build app.py --name "GhostSpine" --pyinstaller-options --collect-data="bamnostic"`
 2. Copy the `.streamlit` directory and paste it in the root directory of `dist/GhostSpine`
+
+## Compiled Versions
+Compiled versions of GhostSpine are available, but they are generally inferior to running GhostSpine in a Python environment. Only use the compiled versions of GhostSpine if setting up an environment is impractical.
+
+The downside of compiling a python codebase to an exe is that said exe is flagged by the antivirus and is prevented from running.For Windows, select the downloaded Zip file, right click, and navigate to properties. In the General tab, find security, click unblock, and click apply. Then extract, navigate to the exe, and run it as normal. This step is not required if running GhostSpine in a Python environment.

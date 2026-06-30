@@ -187,6 +187,20 @@ def make_summary_stats(read, thresh, suspected_uracils):
     qscore.metric("Average Q-Score", round(sum(read.qualities) / len(read.qualities), 1), border=True)
     suspected_u.metric(f"Uracil Count (>= {thresh})", suspected_uracils, border=True)
 
+#create a subset of the sequence only containing bases not within 6 positions of T and show summary stats
+def build_t_free_analysis(read, df):
+    st.write("T-free Sequence (dist=6)")
+    t_free = df.iloc[get_T_free_indicies(read.sequence, 6)].copy()
+    t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq."]) #Useless columns when no Ts present
+    
+    tf_length, qscore = st.columns(2)
+
+    tf_length.metric("T-free Read Length", len(t_free), border=True)
+    qscore.metric("Average Q-Score", round(t_free["Q-Score"].mean(), 1), border=True)
+    
+    st.dataframe(t_free.T)
+    
+
 def visualize_read(read, read_index, thresh) -> None:
     
     suspected_uracils = get_num_uracils(read.mods, thresh)
@@ -199,8 +213,7 @@ def visualize_read(read, read_index, thresh) -> None:
         df = make_read_vizualization_dataframe(read, thresh)
         st.dataframe(df.T, hide_index=False, on_select="ignore") #transpose the df to view it horizontally
         
-        # t_free = df[["Index"] + get_T_free_indicies(read.sequence, 6)].copy()
-        # st.dataframe(t_free)
+        build_t_free_analysis(read, df)
 
     make_U_mod_line_graph(read.mods[:100], "First 100 T reads by T+U Mod Score", thresh)
     make_U_mod_line_graph(read.mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)

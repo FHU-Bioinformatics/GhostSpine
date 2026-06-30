@@ -24,7 +24,7 @@ title, fhu = st.columns([8, 1])
 with title:
     st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
 
-    st.text("v1.0.1")
+    st.text("v1.1.0 | 6/30/2026")
 
 with fhu:
     st.image("icons/fhu_academics.jpg", width = 200) #max width to 200 because the image gets way too big at low width
@@ -103,9 +103,18 @@ def specific_read_analysis():
     readVisualizer.visualize_read(st.session_state["read"], st.session_state["read_index"], uracil_confidence_threshold)
 
 def read_aggregation_analysis():
+    use_filtration = st.sidebar.checkbox("Apply Read Filtration", help="Exclude reads from aggregate analysis by min and max sequence length")
+    
+    if use_filtration:
+        min_len = st.sidebar.number_input("Ignore reads shorter than:", value = 80, min_value=0)
+        max_len = st.sidebar.number_input("Ignore reads longer than:", value = 999999, min_value= 0)
+    else:
+        min_len = -1
+        max_len = -1
+    
     uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230, help="The T+U mod score required to consider a T as a U")
     if st.sidebar.button(f"Run Aggregate Analysis", help="Depending on the file size, this may take some time"):
-        readAggregator.aggregate_file(st.session_state["bam"], uracil_confidence_threshold)
+        readAggregator.aggregate_file(st.session_state["bam"], uracil_confidence_threshold, min_len, max_len)
     
 
 def render_sidebar():

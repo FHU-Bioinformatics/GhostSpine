@@ -49,11 +49,15 @@ def get_canonical_base_counts(reads) -> Counter:
         base_counts.update(r.sequence)
     return base_counts
     
-def aggregate_file(bam, U_thresh):
+def aggregate_file(bam, U_thresh, min_len, max_len):
     with st.spinner("Extracting reads from file, please wait..."):
-        filtered_reads, num_reads_in_file = bamParsing.get_everything(bam)
+        filtered_reads, num_reads_in_file = bamParsing.get_everything(bam, min_len, max_len)
     
-    st.info(f"Aggregated {len(filtered_reads)} reads of length 80+ from {num_reads_in_file} reads")
+    #include length filtration bounds if used
+    if min_len == max_len == -1:
+        st.info(f"Aggregated {len(filtered_reads)} reads from {num_reads_in_file} reads")
+    else:
+        st.info(f"Aggregated {len(filtered_reads)} reads of length ∈ [{min_len}, {max_len}] from {num_reads_in_file} reads")
     
     make_aggregate_summary_stats(filtered_reads)
     
@@ -65,7 +69,12 @@ def aggregate_file(bam, U_thresh):
         prop.sort_values(by='Base', inplace=True)
         st.bar_chart(data = prop, x="Base", y="Count", horizontal=True, color="Base")
     
-    counts = get_sum_of_u_positions(filtered_reads, U_thresh, 50)
-    make_U_count_line_graph(counts)
-    
+    if min_len < 50:
+        st.warning('''The minimum read length is < 50, the Aggregate Uracil Count per Index 
+                   graph will not be generated. To generate this graph, enable read filtration 
+                   and set the minimum sequence length to a value >= 50.''')
+    else:
+        counts = get_sum_of_u_positions(filtered_reads, U_thresh, 50)
+        make_U_count_line_graph(counts)
+        
     

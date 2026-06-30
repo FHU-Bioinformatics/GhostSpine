@@ -56,7 +56,6 @@ def get_Nth_read(bam_path, n : int) -> tuple[FullRead]:
         for read in bam_file:
             if current_index == n:
                 try:
-
                     r = FullRead(read.query_name,
                                 read.query_sequence,
                                 read.query_qualities,
@@ -74,14 +73,15 @@ def get_Nth_read(bam_path, n : int) -> tuple[FullRead]:
     raise IndexError("The specified index is higher than the number of reads in the Bam file")
 
 #Determine if this read should be included in aggregation analysis
-def is_read_valid_for_aggregation(read : FullRead) -> bool:
-    if len(read.sequence) < 80:
+def is_read_valid_for_aggregation(read : FullRead, min_len, max_len) -> bool:
+    seq_len = len(read.sequence)
+    if seq_len < min_len or seq_len > max_len:
         return False
     
     return True
 
 #Called in aggregate analysis mode
-def get_everything(bam_path):
+def get_everything(bam_path, min_len, max_len):
     full_reads : list[FullRead] = []
     num_reads_in_file = 0
     
@@ -98,7 +98,12 @@ def get_everything(bam_path):
                                 list(read.get_tag("ML"))
                                 )
 
-                if is_read_valid_for_aggregation(r):
+                #-1 used as fallback if read filtration isn't enabled
+                if min_len != -1 and max_len != -1:
+                    if is_read_valid_for_aggregation(r, min_len, max_len):
+                        full_reads.append(r)
+                else:
+                    #append without checking validity
                     full_reads.append(r)
 
             except:

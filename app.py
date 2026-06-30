@@ -19,15 +19,22 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-title, fhu = st.columns([8, 1])
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
 
-with title:
-    st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
+def build_header(version : str, date : str):
+    title, fhu = st.columns([8, 1])
 
-    st.text("v1.1.0 | 6/30/2026")
-
-with fhu:
-    st.image("icons/fhu_academics.jpg", width = 200) #max width to 200 because the image gets way too big at low width
+    with title:
+        st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
+        st.text(f"{version} | {date}")
+    with fhu:
+        st.image(resource_path("icons/fhu_academics.jpg"), width = 200) #max width to 200 because the image gets way too big at low width
 
 
 def launch_file_picker():
@@ -68,7 +75,6 @@ def select_read_by_index():
 
 #load read and read_index session states based on selection by name
 def select_read_by_name():
-    
     default_text = ""
     
     with st.sidebar.form("name_form"):
@@ -85,7 +91,6 @@ def select_read_by_name():
 
 #Handles all the sidebar widgets and visualization for the analysis of a specific read
 def specific_read_analysis():
-    
     selection_mode = st.sidebar.segmented_control(
     "Read Extraction Mode", ["Index", "Name"], selection_mode="single", required=True, default="Index",
     help="Extract a read by its index in the Bam file, or its name"
@@ -137,5 +142,5 @@ def render_sidebar():
         read_aggregation_analysis()
 
     
-
+build_header("v1.1.0", "6/30/26")
 render_sidebar()

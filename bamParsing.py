@@ -22,6 +22,9 @@ class FullRead:
                 else:
                     new_seq.append("T")
         return new_seq
+
+    def get_U_count(self, thresh):
+        return sum(1 for mod in self.mods if mod > thresh)
     
                     
 #Extract the name, sequence, qscores, and mods from a read and put them in a FullRead object

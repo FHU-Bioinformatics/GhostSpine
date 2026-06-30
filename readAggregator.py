@@ -67,7 +67,18 @@ def aggregate_file(bam, U_thresh, min_len, max_len):
         
         #Make bases always appear alphabetically
         prop.sort_values(by='Base', inplace=True)
+        st.write("Canonical Base Proportion")
         st.bar_chart(data = prop, x="Base", y="Count", horizontal=True, color="Base")
+        
+        #generate U-containing proportion
+        total_u_count = sum(read.get_U_count(U_thresh) for read in filtered_reads)
+        u_df = prop.copy()
+        u_df.loc[u_df['Base'] == "T", 'Count'] -= total_u_count #subtract total U count from total T count
+        u_df.loc[len(u_df)] = ['U', total_u_count] #add total U count to df
+        u_df.sort_values(by='Base', inplace=True)
+        st.write(f"Base Proportion including Uracil (threshold = {U_thresh})")
+        st.bar_chart(data = u_df, x="Base", y="Count", horizontal=True, color="Base")
+        
     
     if min_len < 50:
         st.warning('''The minimum read length is < 50, the Aggregate Uracil Count per Index 

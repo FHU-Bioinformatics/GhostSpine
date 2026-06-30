@@ -10,3 +10,7 @@
 * Improved visualization of sequence Data Frame
 * Searching for a read by name is now easier
 * A read is now only searched for when the submit button is pressed, instead of any time the input changed
+
+## [1.1.1] - Unreleased
+* Add chart for Uracil makeup in aggregate mode
+* T-free visualization will not be shown if no bases fit the T-free criteria

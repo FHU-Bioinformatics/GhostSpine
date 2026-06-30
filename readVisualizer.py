@@ -189,10 +189,14 @@ def make_summary_stats(read, thresh, suspected_uracils):
 
 #create a subset of the sequence only containing bases not within 6 positions of T and show summary stats
 def build_t_free_analysis(read, df):
-    st.write("T-free Sequence (dist=6)")
     t_free = df.iloc[get_T_free_indicies(read.sequence, 6)].copy()
     t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq."]) #Useless columns when no Ts present
     
+    if len(t_free) == 0:
+        st.warning("The sequence contained no region where a base was 6 or more positions away from a T, nothing to display")
+        return
+    
+    st.write("T-free Sequence (dist=6)")
     tf_length, qscore = st.columns(2)
 
     tf_length.metric("T-free Read Length", len(t_free), border=True)

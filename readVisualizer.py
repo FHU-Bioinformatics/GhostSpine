@@ -34,6 +34,20 @@ def get_num_uracils(mod_list : list[int], thresh) -> int:
     return sum(1 for mod in mod_list if mod >= thresh)
 
 
+#Returns a list of length n where the boolean value matches if the base at said position is T-free
+def gen_T_free_list(sequence, n: int) -> list[bool]:
+    t_free = [True] * len(sequence)
+
+    for i, value in enumerate(sequence):
+        if value == "T":
+            start = max(0, i - n)
+            end = min(len(sequence), i + n + 1)  # end is exclusive
+            for j in range(start, end):
+                t_free[j] = False
+
+    return t_free
+
+
 #Generate relevant information and insert into a dataframe for easy read analysis
 def make_read_vizualization_dataframe(read, thresh):
     
@@ -45,7 +59,8 @@ def make_read_vizualization_dataframe(read, thresh):
         "Canonical" : list(read.sequence),
         "Q-Score" : list(read.qualities),
         "T+U Mod" : full_mod_list,
-        "Uracil Seq." : u_seq
+        "Uracil Seq." : u_seq,
+        "T-Free" : gen_T_free_list(read.sequence, 6)
     })
 
     return df
@@ -64,31 +79,7 @@ def make_U_mod_line_graph(mods, title : str, thresh) -> None:
 
     st.pyplot(fig)
 
-#Returns a sequence where only bases that are n or more positions away from a T are included
-def gen_T_free_sequence(sequence, n: int) -> list[str]:
-    exclude = [False] * len(sequence)
 
-    for i, value in enumerate(sequence):
-        if value == "T":
-            start = max(0, i - n)
-            end = min(len(sequence), i + n + 1)  # end is exclusive
-            for j in range(start, end):
-                exclude[j] = True
-
-    return [value for value, skip in zip(sequence, exclude) if not skip]
-
-#Returns the incicies of a sequence where the base at said index is not within n positions of a T
-def get_T_free_indicies(sequence, n: int) -> list[str]:
-    exclude = [False] * len(sequence)
-
-    for i, value in enumerate(sequence):
-        if value == "T":
-            start = max(0, i - n)
-            end = min(len(sequence), i + n + 1)
-            for j in range(start, end):
-                exclude[j] = True
-
-    return [i for i, skip in enumerate(exclude) if not skip]
 
 def q_score_per_TcallU(sequence, full_mod_list, qualities, title: str, thresh) -> None:
     base_colors = {
@@ -179,7 +170,6 @@ def calculate_Q_score_dis_to_T(sequence, full_mod_list, qualities, title: str, t
     st.dataframe(df)
     
 
-
 def make_summary_stats(read, thresh, suspected_uracils):
     bp_length, qscore, suspected_u = st.columns(3)
 
@@ -187,26 +177,44 @@ def make_summary_stats(read, thresh, suspected_uracils):
     qscore.metric("Average Q-Score", round(sum(read.qualities) / len(read.qualities), 1), border=True)
     suspected_u.metric(f"Uracil Count (>= {thresh})", suspected_uracils, border=True)
 
-#create a subset of the sequence only containing bases not within 6 positions of T and show summary stats
-def build_t_free_analysis(read, df):
-    t_free = df.iloc[get_T_free_indicies(read.sequence, 6)].copy()
-    t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq."]) #Useless columns when no Ts present
+#Show visualization df of t-free regions
+def build_t_free_analysis(t_free):
     
     if len(t_free) == 0:
         st.warning("The sequence contained no region where a base was 6 or more positions away from a T, nothing to display")
         return
     
-    st.write("T-free Sequence (dist=6)")
-    tf_length, qscore = st.columns(2)
-
-    tf_length.metric("T-free Read Length", len(t_free), border=True)
-    qscore.metric("Average Q-Score", round(t_free["Q-Score"].mean(), 1), border=True)
-    
+    t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq.", "T-Free"]) #Useless columns when no Ts present
+        
+    st.subheader("T-free Sequence (dist=6)")
     st.dataframe(t_free.T)
+    
+#Create qscore summary stats of both regions and compare them
+def compare_t_free_and_bearing(t_free, t_bearing):
+    
+    if len(t_bearing) == 0:
+        st.warning("The sequence contained no region where a base was within 6 positions of a T, cannot compare with T-free")
+        return
+    if len(t_free) == 0:
+        st.warning("The sequence contained no region where a base was 6+ positions away from a T, cannot compare with T-bearing")
+        return
+    
+    free_qscore, bearing_qscore, diff, stat_test = st.columns(4)
+    
+    t_free_avg_qscore = round(t_free["Q-Score"].mean(), 1)
+    t_bearing_avg_qscore = round(t_bearing["Q-Score"].mean(), 1)
+    qscore_diff = round(t_free_avg_qscore - t_bearing_avg_qscore, 1)
+    
+    free_qscore.metric("Mean Q-score of T-Free Region", t_free_avg_qscore, f"Length: {len(t_free)}", border=False, delta_color="off", delta_arrow="off")
+    bearing_qscore.metric("Mean Q-score of T-Bearing Region", t_bearing_avg_qscore, f"Length: {len(t_bearing)}", border=False, delta_color="off", delta_arrow="off")
+    diff.metric("Difference of Q-scores", qscore_diff, "T-Free avg. - T-Bearing avg.", border = False, delta_color="off", delta_arrow="off")
+    
+    from scipy import stats
+    t_stat, p_val = stats.ttest_ind(t_free["Q-Score"], t_bearing["Q-Score"], equal_var=False)
+    stat_test.metric("P-value", f"{p_val:.8f}", f"Welch's t-statistic: {t_stat:.4f}", border = False, delta_color="off", delta_arrow="off")
     
 
 def visualize_read(read, read_index, thresh) -> None:
-    
     suspected_uracils = get_num_uracils(read.mods, thresh)
 
     st.info(f"Currently viewing read: {read.name} // Index: {read_index} (zero-based)")
@@ -217,7 +225,13 @@ def visualize_read(read, read_index, thresh) -> None:
         df = make_read_vizualization_dataframe(read, thresh)
         st.dataframe(df.T, hide_index=False, on_select="ignore") #transpose the df to view it horizontally
         
-        build_t_free_analysis(read, df)
+        t_free = df[df["T-Free"] == True].copy()
+        t_bearing = df[df["T-Free"] == False].copy()
+        
+        build_t_free_analysis(t_free)
+        
+        compare_t_free_and_bearing(t_free, t_bearing)
+        
 
     make_U_mod_line_graph(read.mods[:100], "First 100 T reads by T+U Mod Score", thresh)
     make_U_mod_line_graph(read.mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)

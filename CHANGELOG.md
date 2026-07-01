@@ -12,5 +12,7 @@
 * A read is now only searched for when the submit button is pressed, instead of any time the input changed
 
 ## [1.1.1] - Unreleased
-* Add chart for Uracil makeup in aggregate mode
+* Added chart for Uracil makeup in aggregate mode
+* Added T-free boolean mask to read visualization Data Frame
+* Added Q-score comparison for T-free and T-bearing regions
 * T-free visualization will not be shown if no bases fit the T-free criteria

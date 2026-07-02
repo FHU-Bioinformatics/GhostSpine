@@ -16,3 +16,4 @@
 * Added T-free boolean mask to read visualization Data Frame
 * Added Q-score comparison for T-free and T-bearing regions
 * T-free visualization will not be shown if no bases fit the T-free criteria
+* Added backend support for analysing bearing and free regions of any base

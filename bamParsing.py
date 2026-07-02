@@ -23,8 +23,9 @@ class FullRead:
                     new_seq.append("T")
         return new_seq
 
+    #Uses the mod scores and a threshold to see how many uracils are suspected in a read
     def get_U_count(self, thresh):
-        return sum(1 for mod in self.mods if mod > thresh)
+        return sum(1 for mod in self.mods if mod >= thresh)
     
                     
 #Extract the name, sequence, qscores, and mods from a read and put them in a FullRead object

@@ -14,53 +14,40 @@ def create_full_mod_list(sequence : str, mod_list : list[int]) -> list[int]:
             full_list.append(next_mod)
         else:
             full_list.append(0)
+    
     return full_list
 
-#Create a sequence where all T with a mod confidence > thresh is replaced with U
-def create_Uracil_sequence(sequence : str, full_mod_list : list[int], thresh : int) -> list[str]:
-    U_seq = []
-    for i in range(len(sequence)):
-        if sequence[i] != "T":
-            U_seq.append(sequence[i])
-        else:
-            if full_mod_list[i] >= thresh:
-                U_seq.append("U")
-            else:
-                U_seq.append("T")
-    return U_seq
 
-#Get the count of Ts whose mod score is >= the uracil threshold
-def get_num_uracils(mod_list : list[int], thresh) -> int:
-    return sum(1 for mod in mod_list if mod >= thresh)
-
-
-#Returns a list of length n where the boolean value matches if the base at said position is T-free
-def gen_T_free_list(sequence, n: int) -> list[bool]:
-    t_free = [True] * len(sequence)
+#Returns the a list[bool] with a length equivalent to the length of the sequence
+#The list will be True at all indexes where the base at said index is >n positions away from the specified base
+def gen_base_free_list(sequence, n: int, base : str) -> list[bool]:
+    base_free = [True] * len(sequence)
 
     for i, value in enumerate(sequence):
-        if value == "T":
+        if value == base:
             start = max(0, i - n)
             end = min(len(sequence), i + n + 1)  # end is exclusive
             for j in range(start, end):
-                t_free[j] = False
+                base_free[j] = False
 
-    return t_free
+    return base_free
 
 
 #Generate relevant information and insert into a dataframe for easy read analysis
-def make_read_vizualization_dataframe(read, thresh):
+def make_read_vizualization_dataframe(read : bamParsing.FullRead, thresh):
     
     full_mod_list = create_full_mod_list(read.sequence, read.mods.copy())
     
-    u_seq = create_Uracil_sequence(read.sequence, full_mod_list, thresh)
+    uracil_sequence = read.generate_U_seq(read.sequence, read.mods.copy(), thresh)
     
     df = pd.DataFrame({
         "Canonical" : list(read.sequence),
         "Q-Score" : list(read.qualities),
         "T+U Mod" : full_mod_list,
-        "Uracil Seq." : u_seq,
-        "T-Free" : gen_T_free_list(read.sequence, 6)
+        "Uracil Seq." : uracil_sequence,
+        "T-Free" : gen_base_free_list(read.sequence, 6, "T"),
+        "U-Free" : gen_base_free_list(uracil_sequence, 6, "U"),
+        "A-Free" : gen_base_free_list(read.sequence, 6, "A")
     })
 
     return df
@@ -190,36 +177,40 @@ def build_t_free_analysis(t_free):
     st.dataframe(t_free.T)
     
 #Create qscore summary stats of both regions and compare them
-def compare_t_free_and_bearing(t_free, t_bearing):
+def compare_free_and_bearing(free_region, bearing_region, free_name : str, bearing_name : str):
     
-    if len(t_bearing) == 0:
-        st.warning("The sequence contained no region where a base was within 6 positions of a T, cannot compare with T-free")
+    if len(bearing_region) == 0:
+        st.warning(f"A {bearing_name} region in this sequence does not exist")
         return
-    if len(t_free) == 0:
-        st.warning("The sequence contained no region where a base was 6+ positions away from a T, cannot compare with T-bearing")
+    if len(bearing_region) == 0:
+        st.warning(f"A {free_name} region in this sequence does not exist")
         return
     
     free_qscore, bearing_qscore, diff, stat_test = st.columns(4)
     
-    t_free_avg_qscore = round(t_free["Q-Score"].mean(), 1)
-    t_bearing_avg_qscore = round(t_bearing["Q-Score"].mean(), 1)
-    qscore_diff = round(t_free_avg_qscore - t_bearing_avg_qscore, 1)
+    free_avg_qscore = round(free_region["Q-Score"].mean(), 1)
+    bearing_avg_qscore = round(bearing_region["Q-Score"].mean(), 1)
+    qscore_diff = round(free_avg_qscore - bearing_avg_qscore, 1)
     
-    free_qscore.metric("Mean Q-score of T-Free Region", t_free_avg_qscore, f"Length: {len(t_free)}", border=False, delta_color="off", delta_arrow="off")
-    bearing_qscore.metric("Mean Q-score of T-Bearing Region", t_bearing_avg_qscore, f"Length: {len(t_bearing)}", border=False, delta_color="off", delta_arrow="off")
-    diff.metric("Difference of Q-scores", qscore_diff, "T-Free avg. - T-Bearing avg.", border = False, delta_color="off", delta_arrow="off")
+    free_qscore.metric(f"Mean Q-score of {free_name} Region", free_avg_qscore, f"Length: {len(free_region)}", border=False,
+                       delta_color="off", delta_arrow="off")
+    
+    bearing_qscore.metric(f"Mean Q-score of {bearing_name} Region", bearing_avg_qscore, f"Length: {len(bearing_region)}", border=False,
+                          delta_color="off", delta_arrow="off")
+    
+    diff.metric("Difference of Q-scores", qscore_diff, f"{free_name} avg. - {bearing_name} avg.", border = False,
+                delta_color="off", delta_arrow="off")
     
     from scipy import stats
-    t_stat, p_val = stats.ttest_ind(t_free["Q-Score"], t_bearing["Q-Score"], equal_var=False)
-    stat_test.metric("P-value", f"{p_val:.8f}", f"Welch's t-statistic: {t_stat:.4f}", border = False, delta_color="off", delta_arrow="off")
+    t_stat, p_val = stats.ttest_ind(free_region["Q-Score"], bearing_region["Q-Score"], equal_var=False)
+    stat_test.metric("P-value", f"{p_val:.8f}", f"Welch's t-statistic: {t_stat:.8f}", border = False, delta_color="off", delta_arrow="off")
     
 
-def visualize_read(read, read_index, thresh) -> None:
-    suspected_uracils = get_num_uracils(read.mods, thresh)
+def visualize_read(read : bamParsing.FullRead, read_index, thresh) -> None:
 
     st.info(f"Currently viewing read: {read.name} // Index: {read_index} (zero-based)")
 
-    make_summary_stats(read, thresh, suspected_uracils)
+    make_summary_stats(read, thresh, read.get_U_count(thresh))
 
     with st.spinner("Building read visualization..."):
         df = make_read_vizualization_dataframe(read, thresh)
@@ -230,7 +221,19 @@ def visualize_read(read, read_index, thresh) -> None:
         
         build_t_free_analysis(t_free)
         
-        compare_t_free_and_bearing(t_free, t_bearing)
+        compare_free_and_bearing(t_free, t_bearing, "T-free", "T-bearing")
+        
+        u_free = df[df["U-Free"] == True].copy()
+        u_bearing = df[df["U-Free"] == False].copy()
+        
+        compare_free_and_bearing(u_free, u_bearing, "U-free", "U-bearing")
+        
+        u_free = df[df["A-Free"] == True].copy()
+        u_bearing = df[df["A-Free"] == False].copy()
+        
+        compare_free_and_bearing(u_free, u_bearing, "A-free", "A-bearing")
+        
+        
         
 
     make_U_mod_line_graph(read.mods[:100], "First 100 T reads by T+U Mod Score", thresh)

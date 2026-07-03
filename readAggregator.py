@@ -24,7 +24,7 @@ def make_U_count_line_graph(seq) -> None:
 def get_sum_of_u_positions(filtered_reads, U_thresh, n : int):    
     #Generate a list that has the first N sequences from each filtered read
     list_of_first_U_seq_reads = [
-        r.generate_U_seq(r.sequence[:n], r.mods.copy(), U_thresh) for r in filtered_reads
+        r.generate_U_sequence(r.sequence[:n], r.mods, U_thresh) for r in filtered_reads
         ]
     
     #Count the total number of times U appears at each index

@@ -2,16 +2,19 @@ import streamlit as st
 import pandas as pd
 
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import bamParsing
 
-#The current mod list only contains mod values for each T. Extend the list to include 0 for every other base.
+# #The current mod list only contains mod values for each T. Extend the list to include 0 for every other base.
 def create_full_mod_list(sequence : str, mod_list : list[int]) -> list[int]:
     full_list = []
+    i = 0
     for char in sequence:
         if char == "T":
-            next_mod = mod_list.pop(0)
-            full_list.append(next_mod)
+            #should never have out of range exception
+            full_list.append(mod_list[i])
+            i += 1
         else:
             full_list.append(0)
     
@@ -36,18 +39,18 @@ def gen_base_free_list(sequence, n: int, base : str) -> list[bool]:
 #Generate relevant information and insert into a dataframe for easy read analysis
 def make_read_vizualization_dataframe(read : bamParsing.FullRead, thresh):
     
-    full_mod_list = create_full_mod_list(read.sequence, read.mods.copy())
+    full_mod_list = create_full_mod_list(read.sequence, read.mods)
     
-    uracil_sequence = read.generate_U_seq(read.sequence, read.mods.copy(), thresh)
+    uracil_sequence = read.generate_U_sequence(read.sequence, read.mods, thresh)
     
     df = pd.DataFrame({
         "Canonical" : list(read.sequence),
         "Q-Score" : list(read.qualities),
         "T+U Mod" : full_mod_list,
         "Uracil Seq." : uracil_sequence,
-        "T-Free" : gen_base_free_list(read.sequence, 6, "T"),
-        "U-Free" : gen_base_free_list(uracil_sequence, 6, "U"),
-        "A-Free" : gen_base_free_list(read.sequence, 6, "A")
+        "T-Free" : gen_base_free_list(read.sequence, 3, "T"),
+        "U-Free" : gen_base_free_list(uracil_sequence, 3, "U"),
+        "A-Free" : gen_base_free_list(read.sequence, 3, "A")
     })
 
     return df
@@ -65,7 +68,6 @@ def make_U_mod_line_graph(mods, title : str, thresh) -> None:
     plt.axhline(y=thresh, color='r', linestyle='--', linewidth=2)
 
     st.pyplot(fig)
-
 
 
 def q_score_per_TcallU(sequence, full_mod_list, qualities, title: str, thresh) -> None:
@@ -173,7 +175,7 @@ def build_t_free_analysis(t_free):
     
     t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq.", "T-Free"]) #Useless columns when no Ts present
         
-    st.subheader("T-free Sequence (dist=6)")
+    st.subheader("T-free Sequence (dist=3)")
     st.dataframe(t_free.T)
     
 #Create qscore summary stats of both regions and compare them
@@ -205,6 +207,16 @@ def compare_free_and_bearing(free_region, bearing_region, free_name : str, beari
     t_stat, p_val = stats.ttest_ind(free_region["Q-Score"], bearing_region["Q-Score"], equal_var=False)
     stat_test.metric("P-value", f"{p_val:.8f}", f"Welch's t-statistic: {t_stat:.8f}", border = False, delta_color="off", delta_arrow="off")
     
+#build a relative frequency histogram of all qscores in a df
+def make_qscore_distribution_hist(df, title):
+        fig, ax = plt.subplots(figsize=(15, 5))
+        ax.grid(axis='y', alpha=0.7)
+        sns.histplot(data=df, x="Q-Score", stat="percent", binwidth=2, binrange=(0, 50))
+        
+        ax.set_title(f"Distribution of Q-Scores in {title} Regions")
+        ax.set_xlim(0, 50)
+        ax.set_ylim(0, 40)
+        st.pyplot(fig)
 
 def visualize_read(read : bamParsing.FullRead, read_index, thresh) -> None:
 
@@ -228,10 +240,18 @@ def visualize_read(read : bamParsing.FullRead, read_index, thresh) -> None:
         
         compare_free_and_bearing(u_free, u_bearing, "U-free", "U-bearing")
         
-        u_free = df[df["A-Free"] == True].copy()
-        u_bearing = df[df["A-Free"] == False].copy()
+        a_free = df[df["A-Free"] == True].copy()
+        a_bearing = df[df["A-Free"] == False].copy()
         
-        compare_free_and_bearing(u_free, u_bearing, "A-free", "A-bearing")
+        compare_free_and_bearing(a_free, a_bearing, "A-free", "A-bearing")
+        
+        make_qscore_distribution_hist(u_free, "U-Free")
+        make_qscore_distribution_hist(u_bearing, "U-Bearing")
+        
+        make_qscore_distribution_hist(a_free, "A-Free")
+        make_qscore_distribution_hist(a_bearing, "A-Bearing")
+
+
         
         
         

@@ -9,14 +9,16 @@ class FullRead:
         self.qualities = qualities
         self.mods = mods
     
-    #Uses the mod scores to convert a sequence to a u containing sequence
-    def generate_U_seq(self, seq, mods, U_thresh):
+    #Uses the mod scores to create a u containing sequence
+    def generate_U_sequence(self, seq, mods, U_thresh):
         new_seq = []
+        i = 0
         for base in seq:
             if base != "T":
                 new_seq.append(base)
             else:
-                next_mod = mods.pop(0)
+                next_mod = mods[i]
+                i += 1
                 if next_mod >= U_thresh:
                     new_seq.append("U")
                 else:

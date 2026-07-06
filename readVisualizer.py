@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-import bamParsing
+from fullRead import FullRead
 
 # #The current mod list only contains mod values for each T. Extend the list to include 0 for every other base.
 def create_full_mod_list(sequence : str, mod_list : list[int]) -> list[int]:
@@ -21,23 +21,8 @@ def create_full_mod_list(sequence : str, mod_list : list[int]) -> list[int]:
     return full_list
 
 
-#Returns the a list[bool] with a length equivalent to the length of the sequence
-#The list will be True at all indexes where the base at said index is >n positions away from the specified base
-def gen_base_free_list(sequence, n: int, base : str) -> list[bool]:
-    base_free = [True] * len(sequence)
-
-    for i, value in enumerate(sequence):
-        if value == base:
-            start = max(0, i - n)
-            end = min(len(sequence), i + n + 1)  # end is exclusive
-            for j in range(start, end):
-                base_free[j] = False
-
-    return base_free
-
-
 #Generate relevant information and insert into a dataframe for easy read analysis
-def make_read_vizualization_dataframe(read : bamParsing.FullRead, thresh):
+def make_read_vizualization_dataframe(read : FullRead, thresh):
     
     full_mod_list = create_full_mod_list(read.sequence, read.mods)
     
@@ -48,12 +33,13 @@ def make_read_vizualization_dataframe(read : bamParsing.FullRead, thresh):
         "Q-Score" : list(read.qualities),
         "T+U Mod" : full_mod_list,
         "Uracil Seq." : uracil_sequence,
-        "T-Free" : gen_base_free_list(read.sequence, 3, "T"),
-        "U-Free" : gen_base_free_list(uracil_sequence, 3, "U"),
-        "A-Free" : gen_base_free_list(read.sequence, 3, "A")
+        "T-Free" : read.gen_base_free_mask(read.sequence, 3, "T"),
+        "U-Free" : read.gen_base_free_mask(uracil_sequence, 3, "U"),
+        "A-Free" : read.gen_base_free_mask(read.sequence, 3, "A")
     })
 
     return df
+
 
 def make_U_mod_line_graph(mods, title : str, thresh) -> None:
     df = pd.DataFrame({'Mod Score': mods})
@@ -173,7 +159,7 @@ def build_t_free_analysis(t_free):
         st.warning("The sequence contained no region where a base was 6 or more positions away from a T, nothing to display")
         return
     
-    t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq.", "T-Free"]) #Useless columns when no Ts present
+    t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq.", "T-Free", "U-Free", "A-Free"]) #Useless columns when no Ts present
         
     st.subheader("T-free Sequence (dist=3)")
     st.dataframe(t_free.T)
@@ -213,12 +199,12 @@ def make_qscore_distribution_hist(df, title):
         ax.grid(axis='y', alpha=0.7)
         sns.histplot(data=df, x="Q-Score", stat="percent", binwidth=2, binrange=(0, 50))
         
-        ax.set_title(f"Distribution of Q-Scores in {title} Regions")
+        ax.set_title(f"Distribution of Q-Scores in {title} Regions (n={len(df)})")
         ax.set_xlim(0, 50)
-        ax.set_ylim(0, 40)
+        ax.set_ylim(0, 100)
         st.pyplot(fig)
 
-def visualize_read(read : bamParsing.FullRead, read_index, thresh) -> None:
+def visualize_read(read : FullRead, read_index, thresh) -> None:
 
     st.info(f"Currently viewing read: {read.name} // Index: {read_index} (zero-based)")
 
@@ -240,21 +226,18 @@ def visualize_read(read : bamParsing.FullRead, read_index, thresh) -> None:
         
         compare_free_and_bearing(u_free, u_bearing, "U-free", "U-bearing")
         
-        a_free = df[df["A-Free"] == True].copy()
-        a_bearing = df[df["A-Free"] == False].copy()
+        # a_free = df[df["A-Free"] == True].copy()
+        # a_bearing = df[df["A-Free"] == False].copy()
         
-        compare_free_and_bearing(a_free, a_bearing, "A-free", "A-bearing")
+        # compare_free_and_bearing(a_free, a_bearing, "A-free", "A-bearing")
         
         make_qscore_distribution_hist(u_free, "U-Free")
         make_qscore_distribution_hist(u_bearing, "U-Bearing")
         
-        make_qscore_distribution_hist(a_free, "A-Free")
-        make_qscore_distribution_hist(a_bearing, "A-Bearing")
+        # make_qscore_distribution_hist(a_free, "A-Free")
+        # make_qscore_distribution_hist(a_bearing, "A-Bearing")
 
 
-        
-        
-        
 
     make_U_mod_line_graph(read.mods[:100], "First 100 T reads by T+U Mod Score", thresh)
     make_U_mod_line_graph(read.mods[-100:], "Last 100 T reads by T+U Mod Score", thresh)

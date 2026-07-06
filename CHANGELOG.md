@@ -19,3 +19,7 @@
 * Added backend support for analyzing bearing and free regions of any base
 * Free regions are now defined as the neighboring 3 bases to the target instead of 6
 * Added histogram visualization for U-free and U-bearing regions
+
+## [1.2.1] - Unreleased
+* Removed tooltips with no function from read search input forms
+* Replaced tkinter file selection with crossfiledialog

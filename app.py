@@ -1,10 +1,10 @@
 
 import streamlit as st
 
-import tkinter as tk
-from tkinter import filedialog
 import sys
 import os
+
+import crossfiledialog
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -52,11 +52,7 @@ def launch_file_picker():
                 st.session_state["bam"] = file_path
                 
     else:
-        root = tk.Tk()
-        root.withdraw()
-        root.wm_attributes('-topmost', 1)
-        
-        file_path = filedialog.askopenfilename(master=root, filetypes=[('BAM Files', '*.bam')])
+        file_path = crossfiledialog.open_file(filter="*.bam")
         
         if file_path:
             st.session_state["bam"] = file_path
@@ -64,7 +60,7 @@ def launch_file_picker():
 
 #load read and read_index session states based on selection by index
 def select_read_by_index():
-    with st.sidebar.form("index_form"):
+    with st.sidebar.form("index_form", enter_to_submit=False):
         index_to_extract = st.number_input("Read Index (zero-based)", min_value=0, value=0,
                             help="Extract the read of the index listed in this box. Reads use zero-based indexing, meaning they start at 0 instead of 1.")
         st.form_submit_button("Search")
@@ -77,7 +73,7 @@ def select_read_by_index():
 def select_read_by_name():
     default_text = ""
     
-    with st.sidebar.form("name_form"):
+    with st.sidebar.form("name_form", enter_to_submit=False):
         name_to_extract = st.text_input("Read Name", value=default_text,
                             help="Please input the read name carefully. If you make a mistake, Ghost Spine will search the entire file for a read that does not exist.")
         clean_name = name_to_extract.strip().lower()

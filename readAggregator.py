@@ -59,11 +59,39 @@ def aggregate_file(bam, U_thresh, min_len, max_len):
     else:
         st.info(f"Aggregated {len(filtered_reads)} reads of length ∈ [{min_len}, {max_len}] from {num_reads_in_file} reads")
     
+    if len(filtered_reads) == 0:
+        st.error("Could not extract any reads, cannot analyze")
+        return
+    
     make_aggregate_summary_stats(filtered_reads)
     
     with st.spinner("Generating canonical base proportions..."):
         cannonical_base_counts = get_canonical_base_counts(filtered_reads)
         prop = pd.DataFrame(cannonical_base_counts.items(), columns=['Base', 'Count'])
+        
+        u_free_list = []
+        u_bear_list = []
+        for r in filtered_reads:
+            useq = r.generate_U_sequence(r.sequence, r.mods, U_thresh)
+            
+            base_free_mask = r.gen_base_free_mask(useq, 3, "U")
+            
+            read_free_avg = r.get_avg_qscore_by_mask(base_free_mask)
+            read_bear_avg = r.get_avg_qscore_by_mask([not i for i in base_free_mask])
+            
+            if read_free_avg != 0 and read_bear_avg != 0:
+                u_free_list.append(read_free_avg)
+                u_bear_list.append(read_bear_avg)
+            
+            
+        
+        st.write(f"Total free avg: {sum(u_free_list) / len(u_free_list)}")
+        st.write(f"Total bear avg: {sum(u_bear_list) / len(u_bear_list)}")
+        
+        # st.write(f"U-free avg qual. {read.get_avg_qscore_by_mask(read.gen_base_free_mask(uracil_sequence, 3, "U"))}")
+        # st.write(f"U-bearing avg qual. {read.get_avg_qscore_by_mask(read.gen_base_bearing_mask(uracil_sequence, 3, "U"))}")
+        
+        
         
         #Make bases always appear alphabetically
         prop.sort_values(by='Base', inplace=True)

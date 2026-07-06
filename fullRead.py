@@ -41,3 +41,18 @@ class FullRead:
 
         return base_free
     
+    #Returns the a list[bool] with a length equivalent to the length of the sequence
+    #The list will be True at all indexes where the base at said index is within 3 positions of the specified base
+    def gen_base_bearing_mask(self, sequence, n : int, base : str) -> list[bool]:
+        free = self.gen_base_free_mask(sequence, n, base)
+        
+        return [not i for i in free]
+    
+    #Returns the average qscore for all qscores with a mask applied
+    def get_avg_qscore_by_mask(self, mask : list[bool]):
+        scores = [score for score, mask in zip(self.qualities, mask) if mask]
+        
+        try:
+            return sum(scores) / len(scores)
+        except ZeroDivisionError:
+            return 0

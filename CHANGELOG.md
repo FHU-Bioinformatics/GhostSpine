@@ -21,5 +21,6 @@
 * Added histogram visualization for U-free and U-bearing regions
 
 ## [1.2.1] - Unreleased
+* Added Q-score analysis for U-Free and U-Bearing regions in aggregate mode
 * Removed tooltips with no function from read search input forms
 * Replaced tkinter file selection with crossfiledialog

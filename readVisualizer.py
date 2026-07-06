@@ -191,7 +191,8 @@ def compare_free_and_bearing(free_region, bearing_region, free_name : str, beari
     
     from scipy import stats
     t_stat, p_val = stats.ttest_ind(free_region["Q-Score"], bearing_region["Q-Score"], equal_var=False)
-    stat_test.metric("P-value", f"{p_val:.8f}", f"Welch's t-statistic: {t_stat:.8f}", border = False, delta_color="off", delta_arrow="off")
+    stat_test.metric("P-value", f"{p_val:.8f}", f"Welch's t-stat: {t_stat:.8f}", border = False, delta_color="off", delta_arrow="off")
+
     
 #build a relative frequency histogram of all qscores in a df
 def make_qscore_distribution_hist(df, title):
@@ -225,6 +226,7 @@ def visualize_read(read : FullRead, read_index, thresh) -> None:
         u_bearing = df[df["U-Free"] == False].copy()
         
         compare_free_and_bearing(u_free, u_bearing, "U-free", "U-bearing")
+        
         
         # a_free = df[df["A-Free"] == True].copy()
         # a_bearing = df[df["A-Free"] == False].copy()

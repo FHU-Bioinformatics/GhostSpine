@@ -48,7 +48,28 @@ def get_canonical_base_counts(reads) -> Counter:
     for r in reads:
         base_counts.update(r.sequence)
     return base_counts
-    
+
+def compare_qscores_u_regions(filtered_reads, U_thresh):
+    u_free_list = []
+    u_bear_list = []
+    for r in filtered_reads:
+        useq = r.generate_U_sequence(r.sequence, r.mods, U_thresh)
+            
+        base_free_mask = r.gen_base_free_mask(useq, 3, "U")
+            
+        read_free_avg = r.get_avg_qscore_by_mask(base_free_mask)
+        read_bear_avg = r.get_avg_qscore_by_mask([not i for i in base_free_mask])
+            
+        if read_free_avg != 0 and read_bear_avg != 0:
+            u_free_list.append(read_free_avg)
+            u_bear_list.append(read_bear_avg)
+
+        
+    u_free, u_bear = st.columns(2)
+
+    u_free.metric("Aggregate U-Free Average Q-Score", round(sum(u_free_list) / len(u_free_list), 2), f"From {len(u_free_list)} reads", border=True, delta_color="off", delta_arrow="off")
+    u_bear.metric("Aggregate U-Bearing Average Q-Score", round(sum(u_bear_list) / len(u_bear_list), 2), f"From {len(u_bear_list)} reads", border=True, delta_color="off", delta_arrow="off")
+
 def aggregate_file(bam, U_thresh, min_len, max_len):
     with st.spinner("Extracting reads from file, please wait..."):
         filtered_reads, num_reads_in_file = bamParsing.get_everything(bam, min_len, max_len)
@@ -65,34 +86,14 @@ def aggregate_file(bam, U_thresh, min_len, max_len):
     
     make_aggregate_summary_stats(filtered_reads)
     
+    with st.spinner("Calculating U-free + U-bearing Q-score aggregates..."):
+        compare_qscores_u_regions(filtered_reads, U_thresh)
+    
+    
     with st.spinner("Generating canonical base proportions..."):
         cannonical_base_counts = get_canonical_base_counts(filtered_reads)
         prop = pd.DataFrame(cannonical_base_counts.items(), columns=['Base', 'Count'])
-        
-        u_free_list = []
-        u_bear_list = []
-        for r in filtered_reads:
-            useq = r.generate_U_sequence(r.sequence, r.mods, U_thresh)
-            
-            base_free_mask = r.gen_base_free_mask(useq, 3, "U")
-            
-            read_free_avg = r.get_avg_qscore_by_mask(base_free_mask)
-            read_bear_avg = r.get_avg_qscore_by_mask([not i for i in base_free_mask])
-            
-            if read_free_avg != 0 and read_bear_avg != 0:
-                u_free_list.append(read_free_avg)
-                u_bear_list.append(read_bear_avg)
-            
-            
-        
-        st.write(f"Total free avg: {sum(u_free_list) / len(u_free_list)}")
-        st.write(f"Total bear avg: {sum(u_bear_list) / len(u_bear_list)}")
-        
-        # st.write(f"U-free avg qual. {read.get_avg_qscore_by_mask(read.gen_base_free_mask(uracil_sequence, 3, "U"))}")
-        # st.write(f"U-bearing avg qual. {read.get_avg_qscore_by_mask(read.gen_base_bearing_mask(uracil_sequence, 3, "U"))}")
-        
-        
-        
+
         #Make bases always appear alphabetically
         prop.sort_values(by='Base', inplace=True)
         st.write("Canonical Base Proportion")
@@ -103,8 +104,9 @@ def aggregate_file(bam, U_thresh, min_len, max_len):
         u_df = prop.copy()
         u_df.loc[u_df['Base'] == "T", 'Count'] -= total_u_count #subtract total U count from total T count
         u_df.loc[len(u_df)] = ['U', total_u_count] #add total U count to df
+        
         u_df.sort_values(by='Base', inplace=True)
-        st.write(f"Base Proportion including Uracil (threshold = {U_thresh})")
+        st.write(f"Base Proportion Including Uracil (threshold = {U_thresh})")
         st.bar_chart(data = u_df, x="Base", y="Count", horizontal=True, color="Base")
         
     

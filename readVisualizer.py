@@ -40,6 +40,9 @@ def make_read_vizualization_dataframe(read : FullRead, thresh):
 
     return df
 
+def apply_U_highlighting(base):
+    color = 'purple' if base == "U" else ''
+    return f'background-color: {color}'
 
 def make_U_mod_line_graph(mods, title : str, thresh) -> None:
     df = pd.DataFrame({'Mod Score': mods})
@@ -213,7 +216,9 @@ def visualize_read(read : FullRead, read_index, thresh) -> None:
 
     with st.spinner("Building read visualization..."):
         df = make_read_vizualization_dataframe(read, thresh)
-        st.dataframe(df.T, hide_index=False, on_select="ignore") #transpose the df to view it horizontally
+        
+        #Display df transposed with U highlighted
+        st.dataframe((df.T).style.map(apply_U_highlighting, subset=('Uracil Seq.', slice(None))), hide_index=False, on_select="ignore")
         
         t_free = df[df["T-Free"] == True].copy()
         t_bearing = df[df["T-Free"] == False].copy()

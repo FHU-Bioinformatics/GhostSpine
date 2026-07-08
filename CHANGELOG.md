@@ -22,6 +22,6 @@
 
 ## [1.2.1] - Unreleased
 * Added Q-score analysis for U-Free and U-Bearing regions in aggregate mode
-* Added highlighting to U positions
+* Added option to apply coloring to a canonical sequence
 * Removed tooltips with no function from read search input forms
 * Replaced tkinter file selection with crossfiledialog

@@ -1,10 +1,13 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 from fullRead import FullRead
+
+st.elements.lib.pandas_styler_utils._use_display_values = lambda df, style: df.astype(str)
 
 # #The current mod list only contains mod values for each T. Extend the list to include 0 for every other base.
 def create_full_mod_list(sequence : str, mod_list : list[int]) -> list[int]:
@@ -40,9 +43,40 @@ def make_read_vizualization_dataframe(read : FullRead, thresh):
 
     return df
 
-def apply_U_highlighting(base):
-    color = 'purple' if base == "U" else ''
+def apply_base_highlighting(base):
+    
+    base_color_dict = {"A" : "mediumblue", "T" : "forestgreen", "C" : "red", "G" : "orange", "U" : "fuchsia"}
+    
+    # color = 'purple' if base == "U" else ''
+    color = base_color_dict[base]
     return f'background-color: {color}'
+
+def apply_U_highlighting(base):
+    color = "fuchsia" if base == "U" else ''
+    return f'background-color: {color}'
+
+# 1. Define a function that operates on an entire row
+def style_target_row(row, target_idx):
+    base_color_dict = {"A" : "mediumblue", "T" : "forestgreen", "C" : "red", "G" : "orange", "U" : "fuchsia"}
+    
+    if row.name != target_idx:
+        return [''] * len(row)
+    
+    # Apply styling logic to the target row values
+    return [
+        f'background-color: {base_color_dict[base]}' for base in row
+    ]
+
+def style_row_with_dict(data, target_idx, mapping):
+    # Create an empty styling matrix matching the shape of the data
+    style_df = pd.DataFrame('', index=data.index, columns=data.columns)
+    
+    # Map the dictionary directly to the target row, filling missing keys with a blank string
+    styled_row = data.loc[target_idx].map(mapping).fillna('')
+    
+    # Insert the styled row back into our empty matrix
+    style_df.loc[target_idx] = styled_row
+    return style_df
 
 def make_U_mod_line_graph(mods, title : str, thresh) -> None:
     df = pd.DataFrame({'Mod Score': mods})
@@ -217,8 +251,28 @@ def visualize_read(read : FullRead, read_index, thresh) -> None:
     with st.spinner("Building read visualization..."):
         df = make_read_vizualization_dataframe(read, thresh)
         
-        #Display df transposed with U highlighted
-        st.dataframe((df.T).style.map(apply_U_highlighting, subset=('Uracil Seq.', slice(None))), hide_index=False, on_select="ignore")
+        # styled_df = df[['Canonical', 'Q-Score', 'T+U Mod', 'Uracil Seq.']].copy()
+        
+        # #colors the df, but is extremely slow
+        # styled_df = ((df.T).style
+        #              .map(apply_base_highlighting, subset=(['Canonical'], slice(None))) #Color canonical sequence
+        #              .map(apply_U_highlighting, subset=(['Uracil Seq.'], slice(None)))) #Color only U in uracil sequence
+        # st.dataframe(styled_df, hide_index=False, on_select="ignore")
+        
+        if st.session_state["use_base_coloring"]:
+        
+            base_color_dict = {"A" : "background-color: mediumblue",
+                            "T" : "background-color: forestgreen",
+                            "C" : "background-color: red",
+                            "G" : "background-color: orange",
+                            "U" : "background-color: fuchsia"}
+            
+    
+            df_styled = (df.T).style.apply(style_row_with_dict, target_idx="Canonical", mapping=base_color_dict, axis=None)
+            st.dataframe(df_styled, hide_index=False, on_select="ignore")
+        else:
+            st.dataframe(df.T, hide_index=False, on_select="ignore")
+        
         
         t_free = df[df["T-Free"] == True].copy()
         t_bearing = df[df["T-Free"] == False].copy()

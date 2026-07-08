@@ -99,6 +99,13 @@ def specific_read_analysis():
     
     if "read" not in st.session_state : return
     
+    use_base_coloring = st.sidebar.checkbox("Apply Canonical Base Coloring (slow)", value = False, help="Apply coloring to the Canonical Sequence. Depending on the read length, this could take significantly longer than viewing the read with no coloring.")
+    
+    if use_base_coloring:
+        st.session_state["use_base_coloring"] = True
+    else:
+        st.session_state["use_base_coloring"] = False
+    
     uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230, help="The T+U mod score required to consider a T as a U")
     
     readVisualizer.visualize_read(st.session_state["read"], st.session_state["read_index"], uracil_confidence_threshold)

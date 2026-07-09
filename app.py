@@ -145,5 +145,5 @@ def render_sidebar():
         read_aggregation_analysis()
 
     
-build_header("v1.2.0", "7/6/26")
+build_header("v1.2.1", "7/9/26")
 render_sidebar()

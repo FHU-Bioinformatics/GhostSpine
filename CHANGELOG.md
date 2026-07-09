@@ -20,8 +20,9 @@
 * Free regions are now defined as the neighboring 3 bases to the target instead of 6
 * Added histogram visualization for U-free and U-bearing regions
 
-## [1.2.1] - Unreleased
+## [1.2.1] - 2026-07-09
 * Added Q-score analysis for U-Free and U-Bearing regions in aggregate mode
-* Added option to apply coloring to a canonical sequence
+* Added option to apply coloring to a canonical sequence and suspected Uracils
+* Added Q-score difference histogram of U regions in aggregate mode
 * Removed tooltips with no function from read search input forms
 * Replaced tkinter file selection with crossfiledialog

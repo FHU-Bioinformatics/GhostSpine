@@ -64,7 +64,7 @@ def style_target_row(row, target_idx):
     
     # Apply styling logic to the target row values
     return [
-        f'background-color: {base_color_dict[base]}' for base in row
+        f'background-color: {base_color_dict[base]}' for base in row if base in base_color_dict
     ]
 
 def style_row_with_dict(data, target_idx, mapping):
@@ -267,8 +267,10 @@ def visualize_read(read : FullRead, read_index, thresh) -> None:
                             "G" : "background-color: orange",
                             "U" : "background-color: fuchsia"}
             
+            u_only_dict = {"U" : "background-color: fuchsia"}
+            
     
-            df_styled = (df.T).style.apply(style_row_with_dict, target_idx="Canonical", mapping=base_color_dict, axis=None)
+            df_styled = (df.T).style.apply(style_row_with_dict, target_idx="Canonical", mapping=base_color_dict, axis=None).apply(style_row_with_dict, target_idx="Uracil Seq.", mapping=u_only_dict, axis=None)
             st.dataframe(df_styled, hide_index=False, on_select="ignore")
         else:
             st.dataframe(df.T, hide_index=False, on_select="ignore")

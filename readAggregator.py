@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import seaborn as sns
 
 import matplotlib.pyplot as plt
 
@@ -67,8 +68,27 @@ def compare_qscores_u_regions(filtered_reads, U_thresh):
         
     u_free, u_bear = st.columns(2)
 
-    u_free.metric("Aggregate U-Free Average Q-Score", round(sum(u_free_list) / len(u_free_list), 2), f"From {len(u_free_list)} reads", border=True, delta_color="off", delta_arrow="off")
-    u_bear.metric("Aggregate U-Bearing Average Q-Score", round(sum(u_bear_list) / len(u_bear_list), 2), f"From {len(u_bear_list)} reads", border=True, delta_color="off", delta_arrow="off")
+    u_free.metric("Aggregate U-Free Average Q-Score", round(sum(u_free_list) / len(u_free_list), 2), border=True, delta_color="off", delta_arrow="off")
+    u_bear.metric("Aggregate U-Bearing Average Q-Score", round(sum(u_bear_list) / len(u_bear_list), 2), border=True, delta_color="off", delta_arrow="off")
+    
+    u_free_np = np.asarray(u_free_list)
+    u_bear_np = np.asarray(u_bear_list)
+    
+    diff = u_free_np - u_bear_np
+    
+    fig, ax = plt.subplots(figsize=(15, 5))
+    ax.grid(axis='y', alpha=0.7)
+    sns.histplot(data=diff)
+    
+    plt.axvline(x=diff.mean(), color='r', linestyle='--', linewidth=2, label=f'mean: {diff.mean():.2f}')
+    plt.axvline(x=0, color='b', linewidth=2, label='diff = 0')
+    plt.legend()
+    
+    ax.set_xlabel("Q-score Difference (free - bearing)")
+    ax.set_title(f"Difference in Q-scores of U-free and U-bearing regions (n = {len(diff)})")
+    st.pyplot(fig)
+    
+    
 
 def aggregate_file(bam, U_thresh, min_len, max_len):
     with st.spinner("Extracting reads from file, please wait..."):

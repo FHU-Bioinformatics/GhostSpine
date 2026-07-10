@@ -65,7 +65,11 @@ def compare_qscores_u_regions(filtered_reads, U_thresh):
             u_free_list.append(read_free_avg)
             u_bear_list.append(read_bear_avg)
 
-        
+    
+    if len(u_free_list) == 0 or len(u_bear_list) == 0:
+        st.error("The aggregate reads are missing either U-free or U-bearing regions, cannot analyze")
+        return
+    
     u_free, u_bear = st.columns(2)
 
     u_free.metric("Aggregate U-Free Average Q-Score", round(sum(u_free_list) / len(u_free_list), 2), border=True, delta_color="off", delta_arrow="off")
@@ -90,9 +94,9 @@ def compare_qscores_u_regions(filtered_reads, U_thresh):
     
     
 
-def aggregate_file(bam, U_thresh, min_len, max_len):
+def aggregate_file(bam, U_thresh, min_len, max_len, filter_list):
     with st.spinner("Extracting reads from file, please wait..."):
-        filtered_reads, num_reads_in_file = bamParsing.get_everything(bam, min_len, max_len)
+        filtered_reads, num_reads_in_file = bamParsing.get_everything(bam, min_len, max_len, filter_list)
     
     #include length filtration bounds if used
     if min_len == max_len == -1:

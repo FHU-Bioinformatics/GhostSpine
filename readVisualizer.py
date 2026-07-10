@@ -251,13 +251,6 @@ def visualize_read(read : FullRead, read_index, thresh) -> None:
     with st.spinner("Building read visualization..."):
         df = make_read_vizualization_dataframe(read, thresh)
         
-        # styled_df = df[['Canonical', 'Q-Score', 'T+U Mod', 'Uracil Seq.']].copy()
-        
-        # #colors the df, but is extremely slow
-        # styled_df = ((df.T).style
-        #              .map(apply_base_highlighting, subset=(['Canonical'], slice(None))) #Color canonical sequence
-        #              .map(apply_U_highlighting, subset=(['Uracil Seq.'], slice(None)))) #Color only U in uracil sequence
-        # st.dataframe(styled_df, hide_index=False, on_select="ignore")
         
         if st.session_state["use_base_coloring"]:
         

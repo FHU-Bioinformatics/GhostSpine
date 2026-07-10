@@ -60,7 +60,7 @@ def is_read_valid_for_aggregation(read : FullRead, min_len, max_len) -> bool:
     return True
 
 #Called in aggregate analysis mode
-def get_everything(bam_path, min_len, max_len):
+def get_everything(bam_path, min_len, max_len, filter_list):
     full_reads : list[FullRead] = []
     num_reads_in_file = 0
     
@@ -77,13 +77,24 @@ def get_everything(bam_path, min_len, max_len):
                                 list(read.get_tag("ML"))
                                 )
 
-                #-1 used as fallback if read filtration isn't enabled
+                # #-1 used as fallback if read filtration isn't enabled
+                # if min_len != -1 and max_len != -1:
+                #     if is_read_valid_for_aggregation(r, min_len, max_len):
+                #         full_reads.append(r)
+                # else:
+                #     #append without checking validity
+                #     full_reads.append(r)
+                
                 if min_len != -1 and max_len != -1:
-                    if is_read_valid_for_aggregation(r, min_len, max_len):
-                        full_reads.append(r)
-                else:
-                    #append without checking validity
-                    full_reads.append(r)
+                    if is_read_valid_for_aggregation(r, min_len, max_len) == False:
+                        continue
+                
+                #skip the read if it isn't in the filter list (only if there is a filter list)
+                if len(filter_list) != 0 and r.name not in filter_list:
+                    continue
+                
+                full_reads.append(r)
+                
 
             except:
                 pass

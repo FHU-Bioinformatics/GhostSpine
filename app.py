@@ -5,6 +5,7 @@ import sys
 import os
 
 import crossfiledialog
+from pathlib import Path
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -37,25 +38,15 @@ def build_header(version : str, date : str):
         st.image(resource_path("icons/fhu_academics.jpg"), width = 200) #max width to 200 because the image gets way too big at low width
 
 
-def launch_file_picker():
-    #file picker fix for mac
-    if sys.platform == "darwin":
-        script = '''
-                set fileSelected to choose file with prompt "Select a BAM file"
-                return POSIX path of fileSelected
-                '''
-        import subprocess
-        result = subprocess.run(['osascript', '-e', script], capture_output=True, text=True)
-        if result.returncode == 0:
-            file_path =  result.stdout.strip()
-            if file_path: 
-                st.session_state["bam"] = file_path
-                
-    else:
-        file_path = crossfiledialog.open_file(filter="*.bam")
+def launch_file_picker(file_filter, output_location):
+    file_path = crossfiledialog.open_file(filter=file_filter)
         
-        if file_path:
-            st.session_state["bam"] = file_path
+    if file_path:
+        st.session_state[output_location] = file_path
+
+def load_filter_file(file_path: str) -> list[str]:
+    with Path(file_path).open("r", encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
 
 
 #load read and read_index session states based on selection by index
@@ -115,18 +106,34 @@ def read_aggregation_analysis():
     
     if use_filtration:
         min_len = st.sidebar.number_input("Ignore reads shorter than:", value = 80, min_value=0)
-        max_len = st.sidebar.number_input("Ignore reads longer than:", value = 999999, min_value= 0)
+        max_len = st.sidebar.number_input("Ignore reads longer than:", value = 999999, min_value= 0) 
     else:
         min_len = -1
         max_len = -1
     
+    use_filter_file = st.sidebar.checkbox("Use A Filter File", help="Provide a .txt file of read IDs. Only these read IDs will be used in aggregate analysis.")
+    
+    if use_filter_file:
+        ff_button = st.sidebar.button(f"Select A Filter File", on_click=launch_file_picker, args = ("*.txt", "filter_file"))
+        if "filter_file" in st.session_state:
+            st.sidebar.success(st.session_state["filter_file"])
+        else:
+            st.sidebar.warning("Please select a filter file")
+    
     uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230, help="The T+U mod score required to consider a T as a U")
+    
     if st.sidebar.button(f"Run Aggregate Analysis", help="Depending on the file size, this may take some time"):
-        readAggregator.aggregate_file(st.session_state["bam"], uracil_confidence_threshold, min_len, max_len)
+        
+        if use_filter_file:
+            filter_list = load_filter_file(st.session_state["filter_file"]) if "filter_file" in st.session_state else []
+        else:
+            filter_list = []
+        
+        readAggregator.aggregate_file(st.session_state["bam"], uracil_confidence_threshold, min_len, max_len, filter_list)
     
 
 def render_sidebar():
-    select_file_button = st.sidebar.button(f"Select BAM File", on_click=launch_file_picker)
+    select_file_button = st.sidebar.button(f"Select BAM File", on_click=launch_file_picker, args = ("*.bam", "bam"))
 
     #Bam file selection
     if "bam" in st.session_state:

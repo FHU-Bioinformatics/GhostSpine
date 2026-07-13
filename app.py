@@ -3,6 +3,7 @@ import streamlit as st
 
 import sys
 import os
+import tempfile
 
 import crossfiledialog
 from pathlib import Path
@@ -134,6 +135,21 @@ def read_aggregation_analysis():
 
 def render_sidebar():
     select_file_button = st.sidebar.button(f"Select BAM File", on_click=launch_file_picker, args = ("*.bam", "bam"))
+    
+    
+    ## Using streamlits file uploaded if ever moved to server
+    # uploaded_file = st.sidebar.file_uploader("Upload a BAM File", type=["bam"], accept_multiple_files=False)
+    
+    # if uploaded_file is not None:
+        
+    #     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+    #         temp_file.write(uploaded_file.getvalue())
+    #         temp_filepath = temp_file.name
+        
+    #     st.session_state["bam"] = temp_filepath
+
+    # st.session_state["bam"] = temp_filepath
+
 
     #Bam file selection
     if "bam" in st.session_state:

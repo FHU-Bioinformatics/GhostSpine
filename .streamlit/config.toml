@@ -4,3 +4,6 @@ base = "dark"
 
 [browser]
 gatherUsageStats = false
+
+[server]
+maxUploadSize = 99999

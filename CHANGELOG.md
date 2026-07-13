@@ -26,3 +26,7 @@
 * Added Q-score difference histogram of U regions in aggregate mode
 * Removed tooltips with no function from read search input forms
 * Replaced tkinter file selection with crossfiledialog
+
+## [1.2.2] - Unreleased
+* Added option to use a filter file in aggregate mode
+* Added box plots for U-free and U-bearing in aggregate mode

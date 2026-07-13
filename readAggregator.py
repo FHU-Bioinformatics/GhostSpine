@@ -83,6 +83,7 @@ def compare_qscores_u_regions(filtered_reads, U_thresh):
     fig, ax = plt.subplots(figsize=(15, 5))
     ax.grid(axis='y', alpha=0.7)
     sns.histplot(data=diff)
+    # sns.boxplot(data=diff, orient="h")
     
     plt.axvline(x=diff.mean(), color='r', linestyle='--', linewidth=2, label=f'mean: {diff.mean():.2f}')
     plt.axvline(x=0, color='b', linewidth=2, label='diff = 0')
@@ -90,6 +91,20 @@ def compare_qscores_u_regions(filtered_reads, U_thresh):
     
     ax.set_xlabel("Q-score Difference (free - bearing)")
     ax.set_title(f"Difference in Q-scores of U-free and U-bearing regions (n = {len(diff)})")
+    st.pyplot(fig)
+    
+    
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(15, 5))
+
+    sns.boxplot(data = u_free_np, orient = "h", ax = ax1, width=0.3)
+    sns.boxplot(data = u_bear_np, orient = "h", ax = ax2, width=0.3)
+    
+    ax1.set_xlabel("Q-score")
+    ax2.set_xlabel("Q-score")
+    ax1.set_title(f"Q-scores of U-free regions (n = {len(u_free_np)})")
+    ax2.set_title(f"Q-scores of U-bearing regions (n = {len(u_bear_np)})")
+
+    plt.tight_layout()
     st.pyplot(fig)
     
     

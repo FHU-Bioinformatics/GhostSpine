@@ -27,8 +27,9 @@
 * Removed tooltips with no function from read search input forms
 * Replaced tkinter file selection with crossfiledialog
 
-## [1.2.2] - Unreleased
+## [1.2.2] - 2026-7-14
 * Added option to use a filter file in aggregate mode
 * Added box plots for U-free and U-bearing in aggregate mode
 * Added backend support for server deployment
 * Added modified header for compiled versions
+* A U-bearing histogram will not generate if no Uracils are in the read

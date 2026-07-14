@@ -69,6 +69,7 @@ def get_everything(bam_path, min_len, max_len, filter_list):
             num_reads_in_file += 1
 
             #A read isn't guarenteed to have a mod tag for some reason
+            #wrap in try accept to skip the read if any part can't be extracted
             try:
 
                 r = FullRead(read.query_name,
@@ -77,13 +78,6 @@ def get_everything(bam_path, min_len, max_len, filter_list):
                                 list(read.get_tag("ML"))
                                 )
 
-                # #-1 used as fallback if read filtration isn't enabled
-                # if min_len != -1 and max_len != -1:
-                #     if is_read_valid_for_aggregation(r, min_len, max_len):
-                #         full_reads.append(r)
-                # else:
-                #     #append without checking validity
-                #     full_reads.append(r)
                 
                 if min_len != -1 and max_len != -1:
                     if is_read_valid_for_aggregation(r, min_len, max_len) == False:
@@ -95,7 +89,6 @@ def get_everything(bam_path, min_len, max_len, filter_list):
                 
                 full_reads.append(r)
                 
-
             except:
                 pass
 

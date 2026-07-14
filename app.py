@@ -175,8 +175,8 @@ def render_sidebar():
         read_aggregation_analysis()
 
 
-version = "v1.2.1"
-date = "7/9/26"
+version = "v1.2.2"
+date = "7/14/26"
 
 if is_compiled():
     build_header(version, date, "Compiled")

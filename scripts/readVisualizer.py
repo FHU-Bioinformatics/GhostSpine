@@ -38,7 +38,7 @@ def make_read_vizualization_dataframe(read : FullRead, thresh):
         "Uracil Seq." : uracil_sequence,
         "T-Free" : read.gen_base_free_mask(read.sequence, 3, "T"),
         "U-Free" : read.gen_base_free_mask(uracil_sequence, 3, "U"),
-        "A-Free" : read.gen_base_free_mask(read.sequence, 3, "A")
+        # "A-Free" : read.gen_base_free_mask(read.sequence, 3, "A")
     })
 
     return df
@@ -196,7 +196,7 @@ def build_t_free_analysis(t_free):
         st.warning("The sequence contained no region where a base was 6 or more positions away from a T, nothing to display")
         return
     
-    t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq.", "T-Free", "U-Free", "A-Free"]) #Useless columns when no Ts present
+    t_free = t_free.drop(columns=["T+U Mod", "Uracil Seq.", "T-Free", "U-Free"]) #Useless columns when no Ts present
         
     st.subheader("T-free Sequence (dist=3)")
     st.dataframe(t_free.T)
@@ -245,8 +245,10 @@ def make_qscore_distribution_hist(df, title):
 def visualize_read(read : FullRead, read_index, thresh) -> None:
 
     st.info(f"Currently viewing read: {read.name} // Index: {read_index} (zero-based)")
+    
+    uracil_count = read.get_U_count(thresh)
 
-    make_summary_stats(read, thresh, read.get_U_count(thresh))
+    make_summary_stats(read, thresh, uracil_count)
 
     with st.spinner("Building read visualization..."):
         df = make_read_vizualization_dataframe(read, thresh)
@@ -282,16 +284,13 @@ def visualize_read(read : FullRead, read_index, thresh) -> None:
         compare_free_and_bearing(u_free, u_bearing, "U-free", "U-bearing")
         
         
-        # a_free = df[df["A-Free"] == True].copy()
-        # a_bearing = df[df["A-Free"] == False].copy()
-        
-        # compare_free_and_bearing(a_free, a_bearing, "A-free", "A-bearing")
         
         make_qscore_distribution_hist(u_free, "U-Free")
-        make_qscore_distribution_hist(u_bearing, "U-Bearing")
-        
-        # make_qscore_distribution_hist(a_free, "A-Free")
-        # make_qscore_distribution_hist(a_bearing, "A-Bearing")
+        if uracil_count == 0:
+            st.warning("There are no suspected Uracils in this read, the U-bearing histogram will not be generated")
+        else:
+            make_qscore_distribution_hist(u_bearing, "U-Bearing")
+
 
 
 

@@ -7,10 +7,32 @@ In the directory where GhostSpine is installed, run `streamlit run app.py`. This
 Assuming you have a BAM file that was run through Ghost Shark, select it inside Ghost Spine and choose an analysis mode.
 
 ### Specific Read Mode
-This mode is for the inspection of individual reads in the BAM file. Select a read by either inputting its index or name. Once a read is selected, a Uracil threshold can be set. This will show the read length, average Q-score, and Uracil cound, as well as a chart displaying the contents of the read itself. The canonical sequence is the original sequence present. The Q-score shows the Q-score for each base. The T+U mod shows the Ghost Shark mod confidence score for each T. The Uracil sequence converts the canonical sequence to a sequence where each T with a T+U Mod score above the uracil threshold is converted to uracil.
+This mode is for the inspection of individual reads in the BAM file. Select a read by either inputting its index or name. Once a read is selected, a Uracil threshold can be set.
+
+#### Features
+* Read length, average Q-score, and number of suspected uracils based on the set threshold
+* A full visualization chart for each position in the read, showing the canonical base, Q-score, T+U Mod score, and more
+* Optional coloring of Canonical Sequence and Suspected Uracils
+* A visualization of a read's T-free sequence
+* Q-score comparisons ot T-free, T-bearing, U-free, and U-bearing regions
+* Q-score histograms for U-free and U-bearing regions
+* The first and last 100 T+U Mod Scores
+
+![Specific Read Mode](icons/read_mode.png)
 
 ### Aggregate Mode
-This mode is for viewing aggregate statistics of every read in the BAM file. The reads to include in aggregate mode can be filtered by length. Aggregate mode will display the mean and range of read lengths in the selected file, the base makeup proportions (including uracil), and the aggregate quantities of uracil in the first 50 positions.
+This mode is for viewing aggregate statistics of every read in the BAM file. The reads to include in aggregate mode can be filtered by length, or by using a filtration text file.
+
+#### Features
+* Mean, minimum, and maximum read lengths
+* Aggregate Q-score averages for U-free and U-bearing regions
+* Histogram of U-free and U-bearing Q-score differences
+* Box plots for U-free and U-bearing Q-scores
+* Canonical base proportion
+* Base proportion with suspected Uracil included
+* Aggregate Uracil count per index in the first 50 positions
+
+![Aggregate Mode](icons/aggregate_mode.png)
 
 ## Compiled Versions
 Compiled versions of GhostSpine are available, but they are generally inferior to running GhostSpine in a Python environment. Only use the compiled versions of GhostSpine if setting up an environment is impractical.

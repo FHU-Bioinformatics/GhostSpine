@@ -30,3 +30,5 @@
 ## [1.2.2] - Unreleased
 * Added option to use a filter file in aggregate mode
 * Added box plots for U-free and U-bearing in aggregate mode
+* Added backend support for server deployment
+* Added modified header for compiled versions

@@ -10,9 +10,10 @@ from pathlib import Path
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-import bamParsing
-import readVisualizer
-import readAggregator
+import scripts.bamParsing as bamParsing
+import scripts.readVisualizer as readVisualizer
+import scripts.readAggregator as readAggregator
+
 
 st.set_page_config(
     page_title="Ghost Spine",
@@ -29,12 +30,18 @@ def resource_path(relative_path):
     
     return os.path.join(base_path, relative_path)
 
-def build_header(version : str, date : str):
+def is_compiled():
+    return getattr(sys, 'frozen', False)
+
+def build_header(version : str, date : str, extra : str = ""):
     title, fhu = st.columns([8, 1])
 
     with title:
         st.subheader("Ghost Spine: The Ghost Shark Inference Viewer")
-        st.text(f"{version} | {date}")
+        if extra == "":
+            st.text(f"{version} | {date}")
+        else:
+            st.text(f"{version} | {date} ({extra})")
     with fhu:
         st.image(resource_path("icons/fhu_academics.jpg"), width = 200) #max width to 200 because the image gets way too big at low width
 
@@ -167,6 +174,12 @@ def render_sidebar():
     else:
         read_aggregation_analysis()
 
-    
-build_header("v1.2.1", "7/9/26")
+
+version = "v1.2.1"
+date = "7/9/26"
+
+if is_compiled():
+    build_header(version, date, "Compiled")
+else:
+    build_header(version, date)
 render_sidebar()

@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from fullRead import FullRead
+from scripts.fullRead import FullRead
 
 st.elements.lib.pandas_styler_utils._use_display_values = lambda df, style: df.astype(str)
 

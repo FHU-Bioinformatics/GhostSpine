@@ -1,7 +1,7 @@
 from bamnostic import AlignmentFile
 import streamlit as st
 
-from fullRead import FullRead
+from scripts.fullRead import FullRead
                     
 #Extract the name, sequence, qscores, and mods from a read and put them in a FullRead object
 def get_data_from_read(bam_path, target_read_name) -> tuple[FullRead, int]:

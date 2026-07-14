@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 
 
 from collections import Counter
-import bamParsing
+import scripts.bamParsing as bamParsing
+
 
 #Make a linechart of U counts at each position
 def make_U_count_line_graph(seq) -> None:

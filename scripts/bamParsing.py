@@ -51,7 +51,7 @@ def get_Nth_read(bam_path, n : int) -> tuple[FullRead]:
     st.warning("Could not extract all data from the selected read. This read may be missing key data.")
     raise IndexError("The specified index is higher than the number of reads in the Bam file")
 
-#Determine if this read should be included in aggregation analysis
+#Determine if this read should be included in aggregation analysis via sequence length
 def is_read_valid_for_aggregation(read : FullRead, min_len, max_len) -> bool:
     seq_len = len(read.sequence)
     if seq_len < min_len or seq_len > max_len:
@@ -68,8 +68,8 @@ def get_everything(bam_path, min_len, max_len, filter_list):
         for read in bam_file:
             num_reads_in_file += 1
 
-            #A read isn't guarenteed to have a mod tag for some reason
-            #wrap in try accept to skip the read if any part can't be extracted
+            #A read isn't guarenteed to have all the desired data
+            #Wrapped in try/except to ignore a read if any part of its desired data can't be extracted
             try:
 
                 r = FullRead(read.query_name,
@@ -78,14 +78,16 @@ def get_everything(bam_path, min_len, max_len, filter_list):
                                 list(read.get_tag("ML"))
                                 )
 
-                
-                if min_len != -1 and max_len != -1:
+                #if read length filtration is enabled, skip a read if it's out of the specified range
+                if st.session_state["use_length_filtration"]:
                     if is_read_valid_for_aggregation(r, min_len, max_len) == False:
                         continue
                 
-                #skip the read if it isn't in the filter list (only if there is a filter list)
-                if len(filter_list) != 0 and r.name not in filter_list:
-                    continue
+                
+                #skip the read if a filtration file is being used and the read isn't in the file
+                if st.session_state["use_filtration_file"]:
+                    if r.name not in filter_list:
+                        continue
                 
                 full_reads.append(r)
                 

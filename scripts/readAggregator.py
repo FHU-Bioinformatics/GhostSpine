@@ -58,8 +58,11 @@ def compare_qscores_u_regions(filtered_reads, U_thresh):
         useq = r.generate_U_sequence(r.sequence, r.mods, U_thresh)
             
         base_free_mask = r.gen_base_free_mask(useq, 3, "U")
-            
+        
+        #build lists of U-free and U-bearing
         read_free_avg = r.get_avg_qscore_by_mask(base_free_mask)
+        
+        #invert U-free mask to get U-bearing mask
         read_bear_avg = r.get_avg_qscore_by_mask([not i for i in base_free_mask])
             
         if read_free_avg != 0 and read_bear_avg != 0:

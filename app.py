@@ -100,10 +100,7 @@ def specific_read_analysis():
     
     use_base_coloring = st.sidebar.checkbox("Apply Canonical Base Coloring (slow)", value = False, help="Apply coloring to the Canonical Sequence. Depending on the read length, this could take significantly longer than viewing the read with no coloring.")
     
-    if use_base_coloring:
-        st.session_state["use_base_coloring"] = True
-    else:
-        st.session_state["use_base_coloring"] = False
+    st.session_state["use_base_coloring"] = use_base_coloring
     
     uracil_confidence_threshold = st.sidebar.slider("Uracil Threshold", 0, 255, 230, help="The T+U mod score required to consider a T as a U")
     
@@ -119,7 +116,10 @@ def read_aggregation_analysis():
         min_len = -1
         max_len = -1
     
+    st.session_state["use_length_filtration"] = use_filtration
+    
     use_filter_file = st.sidebar.checkbox("Use A Filter File", help="Provide a .txt file of read IDs. Only these read IDs will be used in aggregate analysis.")
+    st.session_state["use_filtration_file"] = use_filter_file
     
     if use_filter_file:
         ff_button = st.sidebar.button(f"Select A Filter File", on_click=launch_file_picker, args = ("*.txt", "filter_file"))
